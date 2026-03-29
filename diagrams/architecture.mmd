@@ -1,0 +1,79 @@
+graph TB
+    subgraph Channels["Canales Digitales"]
+        WEB[Portal Web]
+        MOB[App Movil]
+        BRK[Portal de Corredores]
+        PRT[APIs de Socios]
+    end
+
+    subgraph Experience["Experience APIs - MuleSoft"]
+        EXP_WEB[Experience API Web]
+        EXP_MOB[Experience API Movil]
+        EXP_BRK[Experience API Corredor]
+        EXP_PRT[Experience API Socio]
+    end
+
+    subgraph Process["Process APIs - MuleSoft - Capa de Resiliencia"]
+        PROC_QUOTE[API Cotizacion]
+        PROC_POLICY[API Emision de Poliza]
+        PROC_CLAIM[API Ingreso de Siniestro]
+    end
+
+    subgraph System["APIs de Sistema - MuleSoft"]
+        SYS_SF[API Sistema Salesforce]
+        SYS_PAY[API Sistema Pagos]
+        SYS_DOC[API Sistema Documentos]
+        SYS_NOTIF[API Sistema Notificaciones]
+    end
+
+    subgraph Async["Mensajeria Asincrona"]
+        MQ[Broker de Mensajes - Anypoint MQ]
+        DLQ[Cola de Mensajes Fallidos]
+    end
+
+    subgraph Core["Sistemas Core"]
+        SF[Salesforce - Core de Seguros]
+        PAY[Pasarela de Pagos]
+        DOC[Servicio de Documentos]
+        NOTIF[Servicio de Notificaciones]
+    end
+
+    subgraph Obs["Observabilidad"]
+        OTEL[OpenTelemetry Collector]
+        LOG[Logging Centralizado]
+        DASH[Dashboard de Metricas]
+        ALERT[Alertas SLO]
+    end
+
+    WEB --> EXP_WEB
+    MOB --> EXP_MOB
+    BRK --> EXP_BRK
+    PRT --> EXP_PRT
+
+    EXP_WEB --> PROC_QUOTE
+    EXP_MOB --> PROC_QUOTE
+    EXP_BRK --> PROC_POLICY
+    EXP_PRT --> PROC_CLAIM
+
+    PROC_QUOTE --> SYS_SF
+    PROC_POLICY --> SYS_SF
+    PROC_POLICY --> SYS_PAY
+    PROC_CLAIM --> SYS_SF
+    PROC_CLAIM --> SYS_DOC
+
+    PROC_POLICY --> MQ
+    PROC_CLAIM --> MQ
+    MQ --> DLQ
+
+    SYS_SF --> SF
+    SYS_PAY --> PAY
+    SYS_DOC --> DOC
+    SYS_NOTIF --> NOTIF
+    MQ --> SYS_NOTIF
+
+    PROC_QUOTE --> OTEL
+    PROC_POLICY --> OTEL
+    PROC_CLAIM --> OTEL
+    OTEL --> LOG
+    OTEL --> DASH
+    OTEL --> ALERT
