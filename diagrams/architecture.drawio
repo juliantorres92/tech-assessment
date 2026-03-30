@@ -4,124 +4,124 @@
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="grp_ch" value="Canales Digitales   ·   CO | CL | VE | PE" style="swimlane;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="grp_ch" value="Digital Channels   ·   CO | CL | VE | PE" style="swimlane;startSize=26;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="40" y="40" width="840" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="WEB" value="Portal Web" style="rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" parent="grp_ch" vertex="1">
+                <mxCell id="WEB" value="Web Portal" style="rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" parent="grp_ch" vertex="1">
                     <mxGeometry x="20" y="34" width="155" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="MOB" value="App Movil" style="rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" parent="grp_ch" vertex="1">
+                <mxCell id="MOB" value="Mobile App" style="rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" parent="grp_ch" vertex="1">
                     <mxGeometry x="210" y="34" width="155" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="BRK" value="Portal de Corredores" style="rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" parent="grp_ch" vertex="1">
+                <mxCell id="BRK" value="Broker Portal" style="rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" parent="grp_ch" vertex="1">
                     <mxGeometry x="400" y="34" width="165" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="PRT" value="APIs de Socios" style="rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" parent="grp_ch" vertex="1">
+                <mxCell id="PRT" value="Partner APIs" style="rounded=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;fontStyle=1;" parent="grp_ch" vertex="1">
                     <mxGeometry x="605" y="34" width="155" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="APIGW" value="API Gateway   ·   Autenticacion OAuth 2.0   ·   Control de trafico   ·   Enrutamiento por pais" style="rounded=1;fillColor=#647687;strokeColor=#314354;fontColor=#ffffff;fontStyle=1;fontSize=11;" parent="1" vertex="1">
+                <mxCell id="APIGW" value="API Gateway   ·   OAuth 2.0 Authentication   ·   Traffic Control   ·   Per-Country Routing" style="rounded=1;fillColor=#647687;strokeColor=#314354;fontColor=#ffffff;fontStyle=1;fontSize=11;" parent="1" vertex="1">
                     <mxGeometry x="40" y="160" width="840" height="44" as="geometry"/>
                 </mxCell>
-                <mxCell id="grp_exp" value="Experience APIs — MuleSoft   ·   Escalado automatico   ·   Alta Disponibilidad" style="swimlane;startSize=26;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="grp_exp" value="Experience APIs — MuleSoft   ·   Auto-scaling   ·   High Availability" style="swimlane;startSize=26;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="40" y="244" width="840" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="EXP_WEB" value="Exp API Web" style="rounded=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;fontStyle=1;" parent="grp_exp" vertex="1">
                     <mxGeometry x="20" y="34" width="150" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="EXP_MOB" value="Exp API Movil" style="rounded=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;fontStyle=1;" parent="grp_exp" vertex="1">
+                <mxCell id="EXP_MOB" value="Exp API Mobile" style="rounded=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;fontStyle=1;" parent="grp_exp" vertex="1">
                     <mxGeometry x="210" y="34" width="150" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="EXP_BRK" value="Exp API Corredor" style="rounded=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;fontStyle=1;" parent="grp_exp" vertex="1">
+                <mxCell id="EXP_BRK" value="Exp API Broker" style="rounded=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;fontStyle=1;" parent="grp_exp" vertex="1">
                     <mxGeometry x="400" y="34" width="155" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="EXP_PRT" value="Exp API Socio" style="rounded=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;fontStyle=1;" parent="grp_exp" vertex="1">
+                <mxCell id="EXP_PRT" value="Exp API Partner" style="rounded=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;fontStyle=1;" parent="grp_exp" vertex="1">
                     <mxGeometry x="605" y="34" width="150" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="grp_proc" value="Process APIs — MuleSoft   ·   Circuit Breaker · Retry+Jitter · Bulkhead por pais · Idempotencia" style="swimlane;startSize=26;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="grp_proc" value="Process APIs — MuleSoft   ·   Circuit Breaker · Retry+Jitter · Bulkhead per country · Idempotency" style="swimlane;startSize=26;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="40" y="374" width="840" height="84" as="geometry"/>
                 </mxCell>
-                <mxCell id="PROC_QUOTE" value="API Cotizacion&#xa;sincrona" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_proc" vertex="1">
+                <mxCell id="PROC_QUOTE" value="Quote API&#xa;synchronous" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_proc" vertex="1">
                     <mxGeometry x="50" y="34" width="185" height="42" as="geometry"/>
                 </mxCell>
-                <mxCell id="PROC_POLICY" value="API Emision de Poliza&#xa;sincrona + asincrona" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_proc" vertex="1">
+                <mxCell id="PROC_POLICY" value="Policy Issuance API&#xa;sync + async" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_proc" vertex="1">
                     <mxGeometry x="300" y="34" width="195" height="42" as="geometry"/>
                 </mxCell>
-                <mxCell id="PROC_CLAIM" value="API Ingreso de Siniestro&#xa;asincrona" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_proc" vertex="1">
+                <mxCell id="PROC_CLAIM" value="Claims Intake API&#xa;asynchronous" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_proc" vertex="1">
                     <mxGeometry x="555" y="34" width="200" height="42" as="geometry"/>
                 </mxCell>
                 <mxCell id="grp_sys" value="System APIs — MuleSoft" style="swimlane;startSize=26;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="40" y="508" width="840" height="80" as="geometry"/>
                 </mxCell>
-                <mxCell id="SYS_SF" value="API Salesforce FSC" style="rounded=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;fontStyle=1;" parent="grp_sys" vertex="1">
+                <mxCell id="SYS_SF" value="Salesforce FSC API" style="rounded=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;fontStyle=1;" parent="grp_sys" vertex="1">
                     <mxGeometry x="20" y="35" width="165" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="SYS_PAY" value="Conector Pagos" style="rounded=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;fontStyle=1;" parent="grp_sys" vertex="1">
+                <mxCell id="SYS_PAY" value="Payment Connector" style="rounded=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;fontStyle=1;" parent="grp_sys" vertex="1">
                     <mxGeometry x="220" y="35" width="155" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="SYS_DOC" value="API Documentos" style="rounded=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;fontStyle=1;" parent="grp_sys" vertex="1">
+                <mxCell id="SYS_DOC" value="Document API" style="rounded=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;fontStyle=1;" parent="grp_sys" vertex="1">
                     <mxGeometry x="410" y="35" width="155" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="SYS_NOTIF" value="API Notificaciones" style="rounded=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;fontStyle=1;" parent="grp_sys" vertex="1">
+                <mxCell id="SYS_NOTIF" value="Notification API" style="rounded=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=10;fontStyle=1;" parent="grp_sys" vertex="1">
                     <mxGeometry x="620" y="35" width="165" height="36" as="geometry"/>
                 </mxCell>
-                <mxCell id="REDIS" value="Cache Distribuido   ·   Almacen de claves de idempotencia · Cache de sesion" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                <mxCell id="REDIS" value="Distributed Cache   ·   Idempotency key store · Session cache" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" parent="1" vertex="1">
                     <mxGeometry x="40" y="628" width="840" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="grp_core" value="Sistemas Core" style="swimlane;startSize=26;fillColor=#f0f0f0;strokeColor=#666666;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="grp_core" value="Core Systems" style="swimlane;startSize=26;fillColor=#f0f0f0;strokeColor=#666666;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="40" y="708" width="840" height="84" as="geometry"/>
                 </mxCell>
                 <mxCell id="SF" value="Salesforce FSC&#xa;+ Omnistudio + Industries" style="rounded=1;fillColor=#ffffff;strokeColor=#009EDB;strokeWidth=2;fontSize=10;fontStyle=1;" parent="grp_core" vertex="1">
                     <mxGeometry x="20" y="34" width="175" height="42" as="geometry"/>
                 </mxCell>
-                <mxCell id="PAY" value="Pasarela de Pagos" style="rounded=1;fillColor=#ffffff;strokeColor=#666666;fontSize=10;fontStyle=1;" parent="grp_core" vertex="1">
+                <mxCell id="PAY" value="Payment Gateway" style="rounded=1;fillColor=#ffffff;strokeColor=#666666;fontSize=10;fontStyle=1;" parent="grp_core" vertex="1">
                     <mxGeometry x="222" y="34" width="155" height="42" as="geometry"/>
                 </mxCell>
-                <mxCell id="DOC" value="Servicio de Documentos" style="rounded=1;fillColor=#ffffff;strokeColor=#666666;fontSize=10;fontStyle=1;" parent="grp_core" vertex="1">
+                <mxCell id="DOC" value="Document Service" style="rounded=1;fillColor=#ffffff;strokeColor=#666666;fontSize=10;fontStyle=1;" parent="grp_core" vertex="1">
                     <mxGeometry x="405" y="34" width="165" height="42" as="geometry"/>
                 </mxCell>
-                <mxCell id="NOTIF" value="Notificaciones&#xa;Email / SMS / Push" style="rounded=1;fillColor=#ffffff;strokeColor=#666666;fontSize=10;fontStyle=1;" parent="grp_core" vertex="1">
+                <mxCell id="NOTIF" value="Notifications&#xa;Email / SMS / Push" style="rounded=1;fillColor=#ffffff;strokeColor=#666666;fontSize=10;fontStyle=1;" parent="grp_core" vertex="1">
                     <mxGeometry x="620" y="34" width="165" height="42" as="geometry"/>
                 </mxCell>
-                <mxCell id="grp_async" value="Mensajeria Asincrona" style="swimlane;startSize=26;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="grp_async" value="Async Messaging" style="swimlane;startSize=26;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="910" y="374" width="310" height="214" as="geometry"/>
                 </mxCell>
-                <mxCell id="MQ" value="Anypoint MQ&#xa;Broker de Mensajes" style="rounded=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;fontStyle=1;" parent="grp_async" vertex="1">
+                <mxCell id="MQ" value="Anypoint MQ&#xa;Message Broker" style="rounded=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;fontStyle=1;" parent="grp_async" vertex="1">
                     <mxGeometry x="15" y="34" width="130" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="DLQ" value="Cola de Mensajes Fallidos&#xa;Reintentos agotados&#xa;+ alerta al equipo" style="rounded=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;fontStyle=1;" parent="grp_async" vertex="1">
+                <mxCell id="DLQ" value="Dead Letter Queue&#xa;Retries exhausted&#xa;+ team alert" style="rounded=1;fillColor=#ffffff;strokeColor=#9673a6;fontSize=10;fontStyle=1;" parent="grp_async" vertex="1">
                     <mxGeometry x="165" y="34" width="130" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="MQ_NOTE1" value="Emision/Siniestro publica evento → Notificaciones suscribe" style="text;fontSize=9;fontStyle=2;align=center;strokeColor=none;fillColor=none;" parent="grp_async" vertex="1">
+                <mxCell id="MQ_NOTE1" value="Issuance/Claims publishes event → Notifications subscribes" style="text;fontSize=9;fontStyle=2;align=center;strokeColor=none;fillColor=none;" parent="grp_async" vertex="1">
                     <mxGeometry x="5" y="126" width="300" height="22" as="geometry"/>
                 </mxCell>
-                <mxCell id="MQ_NOTE2" value="Garantia de entrega · Sin perdida de mensajes" style="text;fontSize=9;fontStyle=2;align=center;strokeColor=none;fillColor=none;" parent="grp_async" vertex="1">
+                <mxCell id="MQ_NOTE2" value="Delivery guarantee · No message loss" style="text;fontSize=9;fontStyle=2;align=center;strokeColor=none;fillColor=none;" parent="grp_async" vertex="1">
                     <mxGeometry x="5" y="152" width="300" height="22" as="geometry"/>
                 </mxCell>
-                <mxCell id="grp_obs" value="Observabilidad — OpenTelemetry" style="swimlane;startSize=26;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;" parent="1" vertex="1">
+                <mxCell id="grp_obs" value="Observability — OpenTelemetry" style="swimlane;startSize=26;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=12;" parent="1" vertex="1">
                     <mxGeometry x="1250" y="244" width="310" height="548" as="geometry"/>
                 </mxCell>
-                <mxCell id="OTEL" value="Colector OpenTelemetry&#xa;trazas · metricas · logs" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
+                <mxCell id="OTEL" value="OpenTelemetry Collector&#xa;traces · metrics · logs" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
                     <mxGeometry x="55" y="36" width="200" height="46" as="geometry"/>
                 </mxCell>
-                <mxCell id="LOG" value="Logging Centralizado&#xa;JSON estructurado" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
+                <mxCell id="LOG" value="Centralized Logging&#xa;Structured JSON" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
                     <mxGeometry x="15" y="126" width="130" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="METRICS" value="Metricas&#xa;en tiempo real" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
+                <mxCell id="METRICS" value="Metrics&#xa;real-time" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
                     <mxGeometry x="165" y="126" width="130" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="TRACES" value="Trazas Distribuidas&#xa;seguimiento end-to-end" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
+                <mxCell id="TRACES" value="Distributed Traces&#xa;end-to-end tracking" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
                     <mxGeometry x="15" y="236" width="130" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="ALERT" value="Alertas&#xa;Notificacion de incidentes" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
+                <mxCell id="ALERT" value="Alerts&#xa;Incident notification" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
                     <mxGeometry x="165" y="236" width="130" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="DASH" value="Dashboard Ejecutivo&#xa;disponibilidad por pais" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
+                <mxCell id="DASH" value="Executive Dashboard&#xa;per-country availability" style="rounded=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;fontStyle=1;" parent="grp_obs" vertex="1">
                     <mxGeometry x="55" y="350" width="200" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="OBS_NOTE" value="ID de traza unico propagado en cada llamada HTTP" style="text;fontSize=9;fontStyle=2;align=center;strokeColor=none;fillColor=none;" parent="grp_obs" vertex="1">
+                <mxCell id="OBS_NOTE" value="Unique trace ID propagated on every HTTP call" style="text;fontSize=9;fontStyle=2;align=center;strokeColor=none;fillColor=none;" parent="grp_obs" vertex="1">
                     <mxGeometry x="10" y="458" width="290" height="22" as="geometry"/>
                 </mxCell>
-                <mxCell id="OBS_NOTE2" value="Todas las capas MuleSoft instrumentadas con OTel SDK" style="text;fontSize=9;fontStyle=2;align=center;strokeColor=none;fillColor=none;" parent="grp_obs" vertex="1">
+                <mxCell id="OBS_NOTE2" value="All MuleSoft layers instrumented with OTel SDK" style="text;fontSize=9;fontStyle=2;align=center;strokeColor=none;fillColor=none;" parent="grp_obs" vertex="1">
                     <mxGeometry x="10" y="482" width="290" height="22" as="geometry"/>
                 </mxCell>
                 <mxCell id="e_web_gw" value="" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.115;entryY=-0.023;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="WEB" target="APIGW" edge="1">
@@ -215,10 +215,10 @@
                 <mxCell id="e15" value="" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.6;entryX=-0.001;entryY=0.421;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="PROC_CLAIM" target="MQ" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e16" value="fallo" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=9;" parent="1" source="MQ" target="DLQ" edge="1">
+                <mxCell id="e16" value="failure" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=9;" parent="1" source="MQ" target="DLQ" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e17" value="evento" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=0;exitY=0.5;entryX=1;entryY=0.5;fontSize=9;" parent="1" source="MQ" target="SYS_NOTIF" edge="1">
+                <mxCell id="e17" value="event" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=0;exitY=0.5;entryX=1;entryY=0.5;fontSize=9;" parent="1" source="MQ" target="SYS_NOTIF" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="875" y="438"/>
@@ -226,7 +226,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="e_otel_main" value="OTel SDK en todas las capas MuleSoft&#xa;(traces · logs · metrics)" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#d6b656;exitX=1;exitY=0.5;entryX=0;entryY=0.3;fontSize=9;fontStyle=2;" parent="1" source="APIGW" target="OTEL" edge="1">
+                <mxCell id="e_otel_main" value="OTel SDK on all MuleSoft layers&#xa;(traces · logs · metrics)" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#d6b656;exitX=1;exitY=0.5;entryX=0;entryY=0.3;fontSize=9;fontStyle=2;" parent="1" source="APIGW" target="OTEL" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="1230" y="290"/>

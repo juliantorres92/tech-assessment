@@ -1,54 +1,54 @@
 graph TB
-    subgraph Channels["Canales Digitales   ·   CO | CL | VE | PE"]
-        WEB[Portal Web]
-        MOB[App Movil]
-        BRK[Portal de Corredores]
-        PRT[APIs de Socios]
+    subgraph Channels["Digital Channels   ·   CO | CL | VE | PE"]
+        WEB[Web Portal]
+        MOB[Mobile App]
+        BRK[Broker Portal]
+        PRT[Partner APIs]
     end
 
-    APIGW["API Gateway   ·   Autenticacion OAuth 2.0   ·   Control de trafico   ·   Enrutamiento por pais"]
+    APIGW["API Gateway   ·   OAuth 2.0 Authentication   ·   Traffic Control   ·   Per-Country Routing"]
 
-    subgraph Experience["Experience APIs — MuleSoft   ·   Escalado automatico   ·   Alta Disponibilidad"]
+    subgraph Experience["Experience APIs — MuleSoft   ·   Auto-scaling   ·   High Availability"]
         EXP_WEB[Exp API Web]
-        EXP_MOB[Exp API Movil]
-        EXP_BRK[Exp API Corredor]
-        EXP_PRT[Exp API Socio]
+        EXP_MOB[Exp API Mobile]
+        EXP_BRK[Exp API Broker]
+        EXP_PRT[Exp API Partner]
     end
 
-    subgraph Process["Process APIs — MuleSoft   ·   Circuit Breaker · Retry+Jitter · Bulkhead por pais · Idempotencia"]
-        PROC_QUOTE["API Cotizacion\nsincrona"]
-        PROC_POLICY["API Emision de Poliza\nsincrona + asincrona"]
-        PROC_CLAIM["API Ingreso de Siniestro\nasincrona"]
+    subgraph Process["Process APIs — MuleSoft   ·   Circuit Breaker · Retry+Jitter · Bulkhead per country · Idempotency"]
+        PROC_QUOTE["Quote API\nsynchronous"]
+        PROC_POLICY["Policy Issuance API\nsync + async"]
+        PROC_CLAIM["Claims Intake API\nasynchronous"]
     end
 
     subgraph System["System APIs — MuleSoft"]
-        SYS_SF[API Salesforce FSC]
-        SYS_PAY[Conector Pagos]
-        SYS_DOC[API Documentos]
-        SYS_NOTIF[API Notificaciones]
+        SYS_SF[Salesforce FSC API]
+        SYS_PAY[Payment Connector]
+        SYS_DOC[Document API]
+        SYS_NOTIF[Notification API]
     end
 
-    REDIS["Cache Distribuido   ·   Almacen de claves de idempotencia · Cache de sesion"]
+    REDIS["Distributed Cache   ·   Idempotency key store · Session cache"]
 
-    subgraph Core["Sistemas Core"]
+    subgraph Core["Core Systems"]
         SF["Salesforce FSC\n+ Omnistudio + Industries"]
-        PAY[Pasarela de Pagos]
-        DOC[Servicio de Documentos]
-        NOTIF["Notificaciones\nEmail / SMS / Push"]
+        PAY[Payment Gateway]
+        DOC[Document Service]
+        NOTIF["Notifications\nEmail / SMS / Push"]
     end
 
-    subgraph Async["Mensajeria Asincrona"]
-        MQ["Anypoint MQ\nBroker de Mensajes"]
-        DLQ["Cola de Mensajes Fallidos\nReintentos agotados\n+ alerta al equipo"]
+    subgraph Async["Async Messaging"]
+        MQ["Anypoint MQ\nMessage Broker"]
+        DLQ["Dead Letter Queue\nRetries exhausted\n+ team alert"]
     end
 
-    subgraph Obs["Observabilidad — OpenTelemetry"]
-        OTEL["Colector OpenTelemetry\ntrazas · metricas · logs"]
-        LOG["Logging Centralizado\nJSON estructurado"]
-        METRICS["Metricas\nen tiempo real"]
-        TRACES["Trazas Distribuidas\nseguimiento end-to-end"]
-        ALERT["Alertas\nNotificacion de incidentes"]
-        DASH["Dashboard Ejecutivo\ndisponibilidad por pais"]
+    subgraph Obs["Observability — OpenTelemetry"]
+        OTEL["OpenTelemetry Collector\ntraces · metrics · logs"]
+        LOG["Centralized Logging\nStructured JSON"]
+        METRICS["Metrics\nreal-time"]
+        TRACES["Distributed Traces\nend-to-end tracking"]
+        ALERT["Alerts\nIncident notification"]
+        DASH["Executive Dashboard\nper-country availability"]
     end
 
     WEB --> APIGW
@@ -71,8 +71,8 @@ graph TB
 
     PROC_POLICY -.->|async| MQ
     PROC_CLAIM -.->|async| MQ
-    MQ -.->|fallo| DLQ
-    MQ -.->|evento| SYS_NOTIF
+    MQ -.->|failure| DLQ
+    MQ -.->|event| SYS_NOTIF
 
     System --> REDIS
     REDIS --> Core
@@ -82,7 +82,7 @@ graph TB
     SYS_DOC --> DOC
     SYS_NOTIF --> NOTIF
 
-    APIGW -.->|"OTel SDK en todas las capas MuleSoft\ntrazas · logs · metricas"| OTEL
+    APIGW -.->|"OTel SDK on all MuleSoft layers\ntraces · logs · metrics"| OTEL
     OTEL --> LOG
     OTEL --> METRICS
     LOG --> TRACES
