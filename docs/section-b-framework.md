@@ -43,7 +43,7 @@ config = IntegrationConfig(
 
 **Por qué backoff exponencial:** Las demoras progresivas le dan al sistema downstream tiempo creciente para recuperarse entre intentos. Un intervalo de reintento fijo puede sobrecargar un backend en recuperación parcial.
 
-**Por qué jitter:** Cuando múltiples clientes fallan simultáneamente (p. ej., una interrupción breve de red), todos reintentan en el mismo intervalo si no hay jitter — creando picos de carga sincronizados que impiden al backend en recuperación estabilizarse. El jitter distribuye los reintentos en el tiempo, suavizando la carga.
+**Por qué jitter:** Cuando múltiples clientes fallan simultáneamente (p. ej., una interrupción breve de red), todos reintentan en el mismo intervalo si no hay jitter — creando una avalancha de reintentos simultáneos que impide al backend en recuperación estabilizarse. El jitter distribuye los reintentos en el tiempo, suavizando la carga.
 
 **Por qué 3 reintentos:** Basado en las ventanas de fallo transitorio observadas — la mayoría de errores transitorios se resuelven en 2 reintentos. Un 4to reintento agrega latencia sin beneficio proporcional y puede comprometer el SLO del servicio llamador.
 
@@ -122,14 +122,14 @@ Cada entrada de log es un objeto JSON con un esquema consistente:
 
 ### 7. Propagación de Trazas con OpenTelemetry
 
-Cada petición saliente lleva headers W3C Trace Context (`traceparent`, `tracestate`). Esto permite a la plataforma de observabilidad unir toda la cadena de llamadas — desde el canal digital a través de las Process APIs de MuleSoft hasta Salesforce y de regreso — incluso a través de límites de mensajería asíncrona.
+Cada petición saliente lleva encabezados de traza (`traceparent`, `tracestate`) siguiendo el estándar W3C Trace Context — el formato universal para propagar el ID de traza entre servicios. Esto permite a la plataforma de observabilidad unir toda la cadena de llamadas — desde el canal digital a través de las Process APIs de MuleSoft hasta Salesforce y de regreso — incluso a través de límites de mensajería asíncrona.
 
 ```
 traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
 tracestate:  sura=00f067aa0ba902b7
 ```
 
-**En producción:** Reemplazar la clase `TraceContext` liviana con el paquete `opentelemetry-sdk`. El framework crea un span hijo para cada llamada saliente, registra estado y latencia, y exporta los spans al OpenTelemetry Collector (que alimenta Jaeger, Datadog o similar).
+**En producción:** Reemplazar la clase `TraceContext` liviana con el paquete `opentelemetry-sdk`. El framework crea un registro por cada llamada saliente (span), captura estado y latencia, y los envía al OpenTelemetry Collector (que alimenta herramientas como Jaeger o Datadog para visualización).
 
 ---
 
@@ -168,5 +168,5 @@ respuesta = cliente.call(
 | Circuit breaker separado del reintento | El reintento maneja errores transitorios; el circuit breaker maneja interrupciones sostenidas — modos de fallo distintos requieren respuestas distintas |
 | Idempotencia a nivel de framework | Reintentos seguros para todas las operaciones mutantes sin que el llamador lo gestione |
 | Logging JSON estructurado | Logs legibles por máquina para consultas confiables en plataformas de agregación |
-| Headers W3C Trace Context | Formato de propagación estándar; compatible con todas las plataformas de observabilidad principales |
+| Encabezados de traza estándar (W3C) | Formato universal de propagación de ID de traza; compatible con todas las plataformas de observabilidad principales |
 | Almacén de idempotencia en memoria (demo) | Equivalente en producción: Redis con TTL; misma interfaz, respaldo distribuido |

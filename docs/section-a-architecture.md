@@ -73,8 +73,8 @@ Para flujos de larga duración y alto volumen (según ADR-002):
 
 - **Trazas Distribuidas:** OpenTelemetry SDK en runtimes de MuleSoft; contexto de traza propagado via headers W3C Trace Context en límites síncronos y asíncronos
 - **Logging Centralizado:** Logs JSON estructurados agregados en plataforma de gestión de logs (Splunk, ELK o Anypoint Monitoring)
-- **Métricas:** Tasa de error, latencia p50/p95/p99, estado del circuit breaker, tasa de reintentos, profundidad de cola, consumer lag — por API y por país
-- **Alertas:** Alertas basadas en SLO (tasa de consumo de error budget) que activan respuesta on-call
+- **Métricas:** Tasa de error, latencia promedio y en el percentil 95 (tiempo que tarda el 95% de las peticiones), estado del circuit breaker, tasa de reintentos, profundidad de cola, retraso del consumidor de mensajes — por API y por país
+- **Alertas:** Alertas basadas en el margen de error permitido por el acuerdo de nivel de servicio (SLO) que activan respuesta del equipo de operaciones
 
 ---
 
@@ -112,7 +112,7 @@ La emisión de pólizas, notificación de siniestros y sincronización de datos 
 
 - MuleSoft CloudHub 2.0 (o Runtime Fabric on-premises): despliegue activo-activo en múltiples zonas de disponibilidad
 - Reglas de auto-escalado basadas en utilización de CPU y profundidad de cola de mensajes
-- Volumen de llamadas a la API de Salesforce gestionado mediante aislamiento por bulkhead — cada país tiene una Connected App dedicada con su propia asignación de límites de API
+- Volumen de llamadas a la API de Salesforce gestionado mediante aislamiento por bulkhead — cada país tiene una aplicación conectada de Salesforce (Connected App) dedicada con su propia asignación de límites de API
 - Load balancer con health checks en la capa Experience API — workers no saludables removidos de la rotación sin downtime
 - HA en la capa de base de datos para el almacén de claves de idempotencia (caché distribuido, p. ej. Redis) con replicación
 
@@ -138,11 +138,11 @@ Tres flujos de trabajo paralelos ejecutados durante 12 semanas:
 | 3 | Implementar aislamiento de thread pool por bulkhead por país en MuleSoft |
 | 4 | Desplegar validación de clave de idempotencia para todas las Process APIs mutantes |
 | 5 | Implementar reintento con backoff exponencial + jitter en todas las llamadas a System APIs |
-| 6 | Revisión de confiabilidad: pruebas de chaos en escenarios de circuit breaker |
+| 6 | Revisión de confiabilidad: pruebas de fallo controlado (chaos engineering) en escenarios de circuit breaker |
 | 7 | Implementar capa de caché: catálogo de productos, tokens OAuth |
 | 8 | Pruebas de carga: validar auto-escalado y aislamiento por bulkhead bajo tráfico pico |
 | 9 | Implementar procesamiento y alertas de Dead Letter Queue |
-| 10 | Chaos engineering: simular degradación de Salesforce; validar circuit breaker y fallback |
+| 10 | Pruebas de fallo controlado: simular degradación de Salesforce; validar circuit breaker y fallback |
 | 11 | Validación de HA multi-país: simular fallo de zona de disponibilidad |
 | 12 | Cierre: todos los SLOs cumplidos, todos los caminos críticos probados |
 
@@ -151,7 +151,7 @@ Tres flujos de trabajo paralelos ejecutados durante 12 semanas:
 | Semana | Actividad |
 |:---:|---|
 | 1 | Inventariar todas las System APIs existentes e identificar duplicación entre países |
-| 2 | Establecer estándares de diseño de API y política de versionamiento (semver) |
+| 2 | Establecer estándares de diseño de API y política de versionamiento semántico (ej. v1.2.3) |
 | 3 | Refactorizar conectores duplicados por país en System APIs compartidas |
 | 4 | Migrar las 3 integraciones de mayor tráfico al nuevo patrón de System API |
 | 5 | Implementar mensajería asíncrona para el flujo de emisión de pólizas |
@@ -170,11 +170,11 @@ Tres flujos de trabajo paralelos ejecutados durante 12 semanas:
 | 1 | Desplegar OpenTelemetry collector; instrumentar las 5 Process APIs críticas principales |
 | 2 | Implementar logging JSON estructurado con propagación de correlation ID |
 | 3 | Construir primer dashboard de métricas: tasa de error, latencia, estado del circuit breaker |
-| 4 | Definir reglas de alerta basadas en tasa de consumo de error budget del SLO |
-| 5 | Instrumentar flujos asíncronos: profundidad de cola, consumer lag, tasa de DLQ |
+| 4 | Definir reglas de alerta basadas en el margen de error permitido por el acuerdo de nivel de servicio (SLO) |
+| 5 | Instrumentar flujos asíncronos: profundidad de cola, retraso del consumidor de mensajes, tasa de DLQ |
 | 6 | Primer runbook on-call: circuit breaker abierto, pico de DLQ, degradación de latencia |
 | 7 | Trazas distribuidas end-to-end: propagación de traza en límites síncronos y asíncronos |
-| 8 | Revisión de SLOs: ajustar umbrales con base en 4 semanas de datos de baseline |
+| 8 | Revisión de SLOs: ajustar umbrales con base en 4 semanas de datos reales de operación |
 | 9 | Informe de planeación de capacidad: límites de API de Salesforce por país, utilización de workers |
 | 10 | Finalizar runbook on-call para todos los escenarios P1/P2 |
 | 11 | Informe ejecutivo de observabilidad: cumplimiento de SLOs, tendencias de incidentes |

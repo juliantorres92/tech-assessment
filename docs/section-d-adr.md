@@ -75,7 +75,7 @@ Justificación:
 1. **El contexto regulatorio exige gobierno.** Las operaciones de seguros en múltiples países requieren pistas de auditoría consistentes, controles de soberanía de datos y cumplimiento de seguridad. Una plataforma centralizada provee un único perímetro de cumplimiento.
 2. **La resiliencia a escala requiere consistencia.** Patrones como circuit breakers, idempotencia y reintento con backoff exponencial deben aplicarse de manera uniforme. La propiedad descentralizada produce resiliencia inconsistente — algunos equipos la implementan, otros no.
 3. **La reutilización reduce el costo total.** Las System APIs de Salesforce y las Process APIs del core de seguros, construidas una vez, pueden reutilizarse en todos los países y canales. La descentralización las reconstruye para cada equipo.
-4. **El cuello de botella es resoluble sin descentralizar.** El dolor real es la velocidad de los equipos, no el modelo centralizado en sí. La solución es un **modelo inner-source**: los equipos de producto contribuyen a la plataforma de integración mediante patrones de autoservicio gobernados, plantillas publicadas y conectores reutilizables — mientras el equipo central se enfoca en confiabilidad de la plataforma y gobierno, no en entrega orientada a tickets.
+4. **El cuello de botella es resoluble sin descentralizar.** El dolor real es la velocidad de los equipos, no el modelo centralizado en sí. La solución es un **modelo de contribución abierta interna**: los equipos de producto contribuyen a la plataforma de integración mediante patrones de autoservicio gobernados, plantillas publicadas y conectores reutilizables — mientras el equipo central se enfoca en confiabilidad de la plataforma y gobierno, no en atender tickets de cada equipo.
 
 ---
 
@@ -88,7 +88,7 @@ Justificación:
 - Reportes de cumplimiento más sencillos entre países
 
 **Negativas / Mitigaciones:**
-- El equipo central debe adoptar un modelo de equipo habilitador (no de equipo guardián) — proveer plantillas, aceleradores y patrones de autoservicio a los equipos de producto
+- El equipo central debe actuar como equipo de soporte, no de control — proveer plantillas, aceleradores y patrones de autoservicio a los equipos de producto
 - El gobierno de la plataforma debe ser liviano — los procesos de revisión pesados anulan el propósito
 - Requiere inversión en expertise de MuleSoft y librería de assets en Anypoint Exchange
 
@@ -154,9 +154,9 @@ Un modelo híbrido donde el patrón de comunicación se selecciona según las ca
 - Los flujos de trabajo de larga duración no bloquean los hilos orientados al usuario
 
 **Desventajas:**
-- Introduce consistencia eventual — requiere idempotencia y deduplicación
+- Introduce consistencia eventual — los datos se sincronizan con un pequeño retraso, no en tiempo real; requiere idempotencia y deduplicación
 - Modelo operativo más complejo — requiere monitoreo de profundidad de cola y consumer lag
-- Más difícil trazar el flujo end-to-end sin correlation IDs apropiados y trazas distribuidas
+- Más difícil seguir el flujo completo sin IDs de correlación apropiados y trazas distribuidas
 
 ---
 
@@ -167,7 +167,7 @@ Un modelo híbrido donde el patrón de comunicación se selecciona según las ca
 Justificación:
 1. **La experiencia del usuario dicta los flujos síncronos.** La generación de cotizaciones y la autenticación no pueden ser asíncronas — los usuarios esperan retroalimentación inmediata. Forzarlos por una cola agrega latencia sin beneficio.
 2. **La resiliencia del backend requiere desacoplamiento.** La emisión de pólizas y la notificación de siniestros disparan flujos de trabajo downstream complejos en Salesforce y sistemas externos. Una cadena síncrona significa que cualquier downstream lento o fallido degrada todo el canal. Un enfoque event-driven aísla los fallos al servicio consumidor.
-3. **Las colas absorben los picos de tráfico, no los backends.** En un canal digital multi-país, el tráfico pico (lanzamientos de campañas, períodos de renovación) puede saturar los backends síncronos. Las colas de mensajes actúan como amortiguadores, suavizando la carga sin necesidad de sobreaprovisionamiento del backend.
+3. **Las colas absorben los picos de tráfico, no los backends.** En un canal digital multi-país, el tráfico pico (lanzamientos de campañas, períodos de renovación) puede saturar los backends síncronos. Las colas de mensajes actúan como amortiguadores, suavizando la carga sin necesidad de escalar los backends más allá de lo necesario.
 4. **La idempotencia hace seguro el async.** Cada evento lleva una clave de idempotencia, habilitando replay seguro sin procesamiento duplicado — un requisito ya presente en el framework de integración (Sección B).
 
 ---
