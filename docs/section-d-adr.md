@@ -1,186 +1,186 @@
-# Sección D – Registro de Decisión Técnica
+# Section D – Technical Decision Record
 
 ---
 
-## ADR-001: Plataforma de Integración Centralizada vs. Integraciones Descentralizadas por Equipo
+## ADR-001: Centralized Integration Platform vs. Decentralized Team-Owned Integrations
 
-**Fecha:** 2026-03-28
-**Estado:** Aceptado
-**Decisores:** Líder Técnico, Equipo de Arquitectura
-
----
-
-### Contexto
-
-Sura opera un Canal Digital Directo multi-país donde toda petición entrante y saliente fluye a través de una capa de middleware centralizada (MuleSoft Anypoint Platform) que media entre Salesforce (sistema de registro central de seguros) y sistemas externos, socios y canales digitales.
-
-A medida que la organización escala en países y líneas de producto, los equipos enfrentan una presión creciente por entregar integraciones más rápido. Surgen dos modelos en competencia:
-
-- **Opción A:** Mantener y fortalecer la plataforma de integración centralizada de MuleSoft, gestionada por un equipo dedicado de integración.
-- **Opción B:** Permitir que los equipos de producto sean dueños y construyan sus propias integraciones directamente, reduciendo la dependencia de un equipo central.
-
-Esta decisión tiene impacto directo en velocidad de entrega, gobierno, resiliencia operativa y mantenibilidad a largo plazo.
+**Date:** 2026-03-28
+**Status:** Accepted
+**Decision makers:** Technical Lead, Architecture Team
 
 ---
 
-### Opciones Consideradas
+### Context
 
-#### Opción A — Plataforma de Integración Centralizada (API-Led de MuleSoft)
+Sura operates a multi-country Digital Direct Channel where every inbound and outbound request flows through a centralized middleware layer (MuleSoft Anypoint Platform) that mediates between Salesforce (central insurance system of record) and external systems, partners, and digital channels.
 
-Todas las integraciones se construyen, despliegan y operan a través de MuleSoft Anypoint Platform siguiendo una arquitectura API-led de tres capas:
-- **Experience APIs:** Adaptadores específicos por canal (móvil, web, portales de corredores)
-- **Process APIs:** Orquestación y lógica de negocio
-- **System APIs:** Conectores a Salesforce, sistemas core de seguros y proveedores externos
+As the organization scales across countries and product lines, teams face increasing pressure to deliver integrations faster. Two competing models emerge:
 
-Un equipo dedicado de integración es dueño de la plataforma, hace cumplir los estándares y publica assets reutilizables en Anypoint Exchange.
+- **Option A:** Maintain and strengthen the centralized MuleSoft integration platform, managed by a dedicated integration team.
+- **Option B:** Allow product teams to own and build their own integrations directly, reducing dependency on a central team.
 
-**Ventajas:**
-- Punto único de cumplimiento para seguridad, rate limiting y observabilidad
-- Assets de API reutilizables reducen la duplicación entre países
-- Logging, trazas y manejo de errores consistentes en todas las integraciones
-- Cumplimiento y auditabilidad más sencillos (requisitos regulatorios del sector asegurador)
-- Patrones de resiliencia (reintento, circuit breaker, idempotencia) aplicados una vez, heredados en todas partes
-
-**Desventajas:**
-- El equipo central se convierte en cuello de botella para los equipos de producto de alta velocidad
-- Requiere fuerte gobierno de diseño de API y disciplina de versionamiento
-- Mayor inversión inicial en experiencia en la plataforma y herramientas
+This decision directly impacts delivery speed, governance, operational resilience, and long-term maintainability.
 
 ---
 
-#### Opción B — Integraciones Descentralizadas por Equipo
+### Options Considered
 
-Cada equipo de producto construye y opera sus propias integraciones usando la tecnología de su elección. Los equipos son responsables de su propia confiabilidad, seguridad y observabilidad.
+#### Option A — Centralized Integration Platform (MuleSoft API-Led)
 
-**Ventajas:**
-- Los equipos se mueven más rápido sin esperar a un equipo central
-- Flexibilidad tecnológica por contexto de equipo
-- Menor dependencia organizacional
+All integrations are built, deployed, and operated through MuleSoft Anypoint Platform following a three-layer API-led architecture:
+- **Experience APIs:** Channel-specific adapters (mobile, web, broker portals)
+- **Process APIs:** Orchestration and business logic
+- **System APIs:** Connectors to Salesforce, core insurance systems, and external providers
 
-**Desventajas:**
-- Observabilidad fragmentada — sin vista unificada del estado del sistema
-- Brechas de seguridad y cumplimiento entre equipos de diferente madurez
-- Duplicación de lógica de integración entre países y canales
-- Patrones de resiliencia implementados de forma inconsistente o inexistente
-- Alto costo operativo: N equipos operando N stacks de integración
-- En una industria regulada (seguros), la propiedad descentralizada incrementa significativamente la complejidad de auditoría
+A dedicated integration team owns the platform, enforces standards, and publishes reusable assets to Anypoint Exchange.
 
----
+**Advantages:**
+- Single compliance point for security, rate limiting, and observability
+- Reusable API assets reduce duplication across countries
+- Consistent logging, tracing, and error handling across all integrations
+- Simpler compliance and auditability (insurance sector regulatory requirements)
+- Resilience patterns (retry, circuit breaker, idempotency) applied once, inherited everywhere
 
-### Decisión
-
-**Recomendamos la Opción A — Plataforma de Integración Centralizada**, con ajustes tácticos específicos para reducir cuellos de botella.
-
-Justificación:
-1. **El contexto regulatorio exige gobierno.** Las operaciones de seguros en múltiples países requieren pistas de auditoría consistentes, controles de soberanía de datos y cumplimiento de seguridad. Una plataforma centralizada provee un único perímetro de cumplimiento.
-2. **La resiliencia a escala requiere consistencia.** Patrones como circuit breakers, idempotencia y reintento con backoff exponencial deben aplicarse de manera uniforme. La propiedad descentralizada produce resiliencia inconsistente — algunos equipos la implementan, otros no.
-3. **La reutilización reduce el costo total.** Las System APIs de Salesforce y las Process APIs del core de seguros, construidas una vez, pueden reutilizarse en todos los países y canales. La descentralización las reconstruye para cada equipo.
-4. **El cuello de botella es resoluble sin descentralizar.** El dolor real es la velocidad de los equipos, no el modelo centralizado en sí. La solución es un **modelo de contribución abierta interna**: los equipos de producto contribuyen a la plataforma de integración mediante patrones de autoservicio gobernados, plantillas publicadas y conectores reutilizables — mientras el equipo central se enfoca en confiabilidad de la plataforma y gobierno, no en atender tickets de cada equipo.
+**Disadvantages:**
+- Central team becomes a bottleneck for high-velocity product teams
+- Requires strong API design governance and versioning discipline
+- Higher upfront investment in platform expertise and tooling
 
 ---
 
-### Consecuencias
+#### Option B — Decentralized Team-Owned Integrations
 
-**Positivas:**
-- Observabilidad unificada en todos los flujos de integración
-- Postura de resiliencia y seguridad consistente
-- Reducción de duplicación de conectores de Salesforce y sistemas core
-- Reportes de cumplimiento más sencillos entre países
+Each product team builds and operates its own integrations using the technology of their choice. Teams are responsible for their own reliability, security, and observability.
 
-**Negativas / Mitigaciones:**
-- El equipo central debe actuar como equipo de soporte, no de control — proveer plantillas, aceleradores y patrones de autoservicio a los equipos de producto
-- El gobierno de la plataforma debe ser liviano — los procesos de revisión pesados anulan el propósito
-- Requiere inversión en expertise de MuleSoft y librería de assets en Anypoint Exchange
+**Advantages:**
+- Teams move faster without waiting for a central team
+- Technology flexibility per team context
+- Lower organizational dependency
+
+**Disadvantages:**
+- Fragmented observability — no unified view of system health
+- Security and compliance gaps between teams of different maturity
+- Duplication of integration logic across countries and channels
+- Resilience patterns implemented inconsistently or not at all
+- High operational cost: N teams operating N integration stacks
+- In a regulated industry (insurance), decentralized ownership significantly increases audit complexity
+
+---
+
+### Decision
+
+**We recommend Option A — Centralized Integration Platform**, with specific tactical adjustments to reduce bottlenecks.
+
+Rationale:
+1. **The regulatory context demands governance.** Insurance operations across multiple countries require consistent audit trails, data sovereignty controls, and security compliance. A centralized platform provides a single compliance perimeter.
+2. **Resilience at scale requires consistency.** Patterns such as circuit breakers, idempotency, and retry with exponential backoff must be applied uniformly. Decentralized ownership produces inconsistent resilience — some teams implement it, others don't.
+3. **Reuse reduces total cost.** Salesforce System APIs and core insurance Process APIs, built once, can be reused across all countries and channels. Decentralization rebuilds them per team.
+4. **The bottleneck is solvable without decentralizing.** The real pain is team velocity, not the centralized model itself. The solution is an **internal open contribution model**: product teams contribute to the integration platform through governed self-service patterns, published templates, and reusable connectors — while the central team focuses on platform reliability and governance, not attending tickets from each team.
+
+---
+
+### Consequences
+
+**Positive:**
+- Unified observability across all integration flows
+- Consistent resilience and security posture
+- Reduced duplication of Salesforce and core system connectors
+- Simpler compliance reporting across countries
+
+**Negative / Mitigations:**
+- The central team must act as a support team, not a control team — providing templates, accelerators, and self-service patterns to product teams
+- Platform governance must be lightweight — heavy review processes defeat the purpose
+- Requires investment in MuleSoft expertise and Anypoint Exchange asset library
 
 ---
 ---
 
-## ADR-002: Arquitectura Event-Driven vs. Solicitud-Respuesta Síncrona para Flujos Críticos
+## ADR-002: Event-Driven vs. Synchronous Request-Response for Critical Flows
 
-**Fecha:** 2026-03-28
-**Estado:** Aceptado
-**Decisores:** Líder Técnico, Equipo de Arquitectura
-
----
-
-### Contexto
-
-El Canal Digital Directo maneja múltiples tipos de flujos con características distintas:
-
-- **Generación de cotización:** El usuario solicita una cotización de seguro en tiempo real — espera una respuesta en menos de 3 segundos
-- **Emisión de póliza:** Dispara procesos downstream en Salesforce, pasarelas de pago y generación de documentos
-- **Notificación de siniestro:** Inicia un flujo de trabajo multi-paso entre equipos internos y ajustadores externos
-- **Sincronización de datos entre países:** Los datos de pólizas y clientes deben mantenerse consistentes entre instancias de Salesforce por país
-
-La pregunta es: ¿qué flujos deben ser **síncronos (solicitud-respuesta)** y cuáles **event-driven (mensajería asíncrona)**?
+**Date:** 2026-03-28
+**Status:** Accepted
+**Decision makers:** Technical Lead, Architecture Team
 
 ---
 
-### Opciones Consideradas
+### Context
 
-#### Opción A — Solicitud-Respuesta Síncrona para Todos los Flujos
+The Digital Direct Channel handles multiple flow types with distinct characteristics:
 
-Todas las operaciones se manejan mediante llamadas HTTP síncronas a través de MuleSoft. El llamador espera una respuesta completa antes de continuar.
+- **Quote generation:** The user requests an insurance quote in real time — expects a response in under 3 seconds
+- **Policy issuance:** Triggers downstream processes in Salesforce, payment gateways, and document generation
+- **Claims notification:** Initiates a multi-step workflow across internal teams and external adjusters
+- **Cross-country data synchronization:** Policy and customer data must remain consistent across per-country Salesforce instances
 
-**Ventajas:**
-- Modelo de programación simple — más fácil de razonar y depurar
-- Retroalimentación de error inmediata al llamador
-- No requiere infraestructura adicional de mensajería
-
-**Desventajas:**
-- Acoplamiento fuerte entre sistemas — si el downstream falla, todo el flujo falla
-- No puede manejar picos de alto volumen con gracia — la carga se propaga directamente a los backends
-- Las operaciones de larga duración (siniestros, generación de documentos) bloquean el hilo del llamador
-- Fallos en cascada: una respuesta lenta de Salesforce degrada todo el canal
+The question is: which flows should be **synchronous (request-response)** and which **event-driven (async messaging)**?
 
 ---
 
-#### Opción B — Event-Driven para Flujos de Larga Duración y Alto Volumen, Síncrono para Respuestas en Tiempo Real
+### Options Considered
 
-Un modelo híbrido donde el patrón de comunicación se selecciona según las características del flujo:
+#### Option A — Synchronous Request-Response for All Flows
 
-| Tipo de Flujo | Patrón | Justificación |
+All operations are handled through synchronous HTTP calls via MuleSoft. The caller waits for a complete response before continuing.
+
+**Advantages:**
+- Simple programming model — easier to reason about and debug
+- Immediate error feedback to the caller
+- No additional messaging infrastructure required
+
+**Disadvantages:**
+- Tight coupling between systems — if the downstream fails, the entire flow fails
+- Cannot handle high-volume spikes gracefully — load propagates directly to backends
+- Long-running operations (claims, document generation) block the caller's thread
+- Cascading failures: a slow Salesforce response degrades the entire channel
+
+---
+
+#### Option B — Event-Driven for Long-Running and High-Volume Flows, Synchronous for Real-Time Responses
+
+A hybrid model where the communication pattern is selected based on the flow's characteristics:
+
+| Flow Type | Pattern | Rationale |
 |---|---|---|
-| Generación de cotización | Síncrono | El usuario espera la respuesta; debe ser < 3s |
-| Emisión de póliza | Event-driven (asíncrono) | Flujo de trabajo multi-paso; desacopla el canal del procesamiento backend |
-| Notificación de siniestro | Event-driven (asíncrono) | Inicia un flujo de trabajo de larga duración multi-equipo |
-| Sincronización de datos entre países | Event-driven (asíncrono) | La consistencia eventual es aceptable; el volumen puede ser alto |
-| Autenticación / sesión | Síncrono | Sensible a la seguridad; requiere validación inmediata |
+| Quote generation | Synchronous | User waits for the response; must be < 3s |
+| Policy issuance | Event-driven (async) | Multi-step workflow; decouples channel from backend processing |
+| Claims notification | Event-driven (async) | Initiates a long-running multi-team workflow |
+| Cross-country data sync | Event-driven (async) | Eventual consistency is acceptable; volume can be high |
+| Authentication / session | Synchronous | Security-sensitive; requires immediate validation |
 
-**Ventajas:**
-- Desacopla productores de consumidores — el canal permanece responsivo incluso si Salesforce es lento
-- Absorbe picos de tráfico mediante buffering en la cola de mensajes
-- Habilita patrones de reintento y cola de mensajes fallidos para eventos con error
-- Los flujos de trabajo de larga duración no bloquean los hilos orientados al usuario
+**Advantages:**
+- Decouples producers from consumers — the channel remains responsive even if Salesforce is slow
+- Absorbs traffic spikes through message queue buffering
+- Enables retry and dead letter queue patterns for failed events
+- Long-running workflows do not block user-facing threads
 
-**Desventajas:**
-- Introduce consistencia eventual — los datos se sincronizan con un pequeño retraso, no en tiempo real; requiere idempotencia y deduplicación
-- Modelo operativo más complejo — requiere monitoreo de profundidad de cola y consumer lag
-- Más difícil seguir el flujo completo sin IDs de correlación apropiados y trazas distribuidas
-
----
-
-### Decisión
-
-**Recomendamos la Opción B — Modelo híbrido: event-driven para flujos de larga duración y alto volumen, síncrono para respuestas orientadas al usuario en tiempo real.**
-
-Justificación:
-1. **La experiencia del usuario dicta los flujos síncronos.** La generación de cotizaciones y la autenticación no pueden ser asíncronas — los usuarios esperan retroalimentación inmediata. Forzarlos por una cola agrega latencia sin beneficio.
-2. **La resiliencia del backend requiere desacoplamiento.** La emisión de pólizas y la notificación de siniestros disparan flujos de trabajo downstream complejos en Salesforce y sistemas externos. Una cadena síncrona significa que cualquier downstream lento o fallido degrada todo el canal. Un enfoque event-driven aísla los fallos al servicio consumidor.
-3. **Las colas absorben los picos de tráfico, no los backends.** En un canal digital multi-país, el tráfico pico (lanzamientos de campañas, períodos de renovación) puede saturar los backends síncronos. Las colas de mensajes actúan como amortiguadores, suavizando la carga sin necesidad de escalar los backends más allá de lo necesario.
-4. **La idempotencia hace seguro el async.** Cada evento lleva una clave de idempotencia, habilitando replay seguro sin procesamiento duplicado — un requisito ya presente en el framework de integración (Sección B).
+**Disadvantages:**
+- Introduces eventual consistency — the data synchronizes with a small delay, not in real time; requires idempotency and deduplication
+- More complex operational model — requires queue depth and message consumer lag monitoring
+- Harder to trace the full end-to-end flow without proper correlation IDs and distributed traces
 
 ---
 
-### Consecuencias
+### Decision
 
-**Positivas:**
-- El canal permanece responsivo ante degradación del backend
-- Los flujos de trabajo de larga duración son confiables y reintentables
-- Los picos de tráfico no se propagan en cascada hacia fallos del backend
-- Cada tipo de flujo usa el patrón de comunicación más adecuado a sus características
+**We recommend Option B — Hybrid model: event-driven for long-running and high-volume flows, synchronous for real-time user-facing responses.**
 
-**Negativas / Mitigaciones:**
-- La complejidad operativa aumenta — mitigada por observabilidad centralizada (Sección A) con dashboards de profundidad de cola y consumer lag
-- La consistencia eventual requiere disciplina de idempotencia — aplicada a nivel del framework de integración
-- El trazado end-to-end requiere correlation IDs propagados en límites síncronos y asíncronos — aplicado mediante propagación de trazas de OpenTelemetry (Sección B)
+Rationale:
+1. **User experience dictates synchronous flows.** Quote generation and authentication cannot be asynchronous — users expect immediate feedback. Forcing them through a queue adds latency without benefit.
+2. **Backend resilience requires decoupling.** Policy issuance and claims notification trigger complex downstream workflows in Salesforce and external systems. A synchronous chain means any slow or failing downstream degrades the entire channel. An event-driven approach isolates failures to the consuming service.
+3. **Queues absorb traffic spikes, not backends.** In a multi-country digital channel, peak traffic (campaign launches, renewal periods) can saturate synchronous backends. Message queues act as buffers, smoothing the load without scaling backends beyond what is necessary.
+4. **Idempotency makes async safe.** Each event carries an idempotency key, enabling safe replay without duplicate processing — a requirement already present in the integration framework (Section B).
+
+---
+
+### Consequences
+
+**Positive:**
+- The channel remains responsive under backend degradation
+- Long-running workflows are reliable and retriable
+- Traffic spikes do not cascade into backend failures
+- Each flow type uses the communication pattern best suited to its characteristics
+
+**Negative / Mitigations:**
+- Operational complexity increases — mitigated by centralized observability (Section A) with queue depth and message consumer lag dashboards
+- Eventual consistency requires idempotency discipline — applied at the integration framework level
+- End-to-end tracing requires correlation IDs propagated across sync and async boundaries — applied through OpenTelemetry trace propagation (Section B)

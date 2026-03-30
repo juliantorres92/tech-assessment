@@ -1,189 +1,189 @@
-# Sección A – Arquitectura y Hoja de Ruta
+# Section A – Architecture and Roadmap
 
 ---
 
-## 1. Arquitectura Objetivo End-to-End — Canal Digital Directo Multi-País
+## 1. Target End-to-End Architecture — Multi-Country Digital Direct Channel
 
-### Visión General
+### Overview
 
-La arquitectura objetivo está diseñada para un Canal Digital Directo de seguros multi-país, donde Salesforce actúa como el sistema de registro central y MuleSoft Anypoint Platform como el middleware de integración universal. Toda petición entrante desde canales digitales y toda petición saliente hacia sistemas externos fluye a través de la capa MuleSoft.
+The target architecture is designed for a multi-country insurance Digital Direct Channel, where Salesforce acts as the central system of record and MuleSoft Anypoint Platform as the universal integration middleware. Every inbound request from digital channels and every outbound request to external systems flows through the MuleSoft layer.
 
-La arquitectura responde a cuatro pilares no funcionales:
+The architecture is built around four non-functional pillars:
 
-- **Alta Disponibilidad:** Sin punto único de fallo; despliegue activo-activo en múltiples zonas de disponibilidad
-- **Escalabilidad:** Escalado horizontal en la capa de runtime de MuleSoft; límites de governor de Salesforce gestionados mediante aislamiento por bulkhead
-- **Resiliencia:** Reintento con backoff exponencial, circuit breaker y bulkhead aplicados en la capa de integración
-- **Observabilidad:** Logging unificado, trazas distribuidas (OpenTelemetry) y dashboards en tiempo real sobre todos los flujos de integración
+- **High Availability:** No single point of failure; active-active deployment across multiple availability zones
+- **Scalability:** Horizontal scaling at the MuleSoft runtime layer; Salesforce governor limits managed through bulkhead isolation
+- **Resilience:** Retry with exponential backoff, circuit breaker, and bulkhead applied at the integration layer
+- **Observability:** Unified logging, distributed traces (OpenTelemetry), and real-time dashboards across all integration flows
 
 ---
 
-### Capas de la Arquitectura
+### Architecture Layers
 
-#### Capa 1 — Canales Digitales (Consumidores)
+#### Layer 1 — Digital Channels (Consumers)
 
-- Portal web (autoservicio del cliente)
-- Aplicación móvil
-- Portal de agentes y corredores
-- Socios externos (APIs)
+- Web portal (customer self-service)
+- Mobile application
+- Agent and broker portal
+- External partners (APIs)
 
-Todos los canales se comunican exclusivamente a través de las Experience APIs de MuleSoft por HTTPS/REST. Ningún canal tiene acceso directo a Salesforce ni a los sistemas de backend.
+All channels communicate exclusively through MuleSoft Experience APIs over HTTPS/REST. No channel has direct access to Salesforce or backend systems.
 
-#### Capa 2 — Integración API-Led con MuleSoft (Middleware)
+#### Layer 2 — API-Led Integration with MuleSoft (Middleware)
 
-Modelo de conectividad API-led de tres capas:
+Three-layer API-led connectivity model:
 
 **Experience APIs**
-- Adaptadores específicos por canal: uno por tipo de canal (web, móvil, corredor, socio)
-- Maneja autenticación (OAuth 2.0 / Connected App), validación de peticiones y formateo de respuestas
-- Aplica rate limiting y throttling por canal
-- Inyecta correlation IDs y contexto de traza (OpenTelemetry) en cada petición
+- Channel-specific adapters: one per channel type (web, mobile, broker, partner)
+- Handles authentication (OAuth 2.0 / Connected App), request validation, and response formatting
+- Applies rate limiting and throttling per channel
+- Injects correlation IDs and trace context (OpenTelemetry) into every request
 
 **Process APIs**
-- Capa de orquestación: compone múltiples llamadas a System APIs para construir operaciones de negocio
-- Implementa lógica de negocio: orquestación de cotizaciones, emisión de pólizas, ingreso de siniestros
-- Aplica patrones de resiliencia: reintento con backoff exponencial + jitter, circuit breaker, validación de clave de idempotencia
-- Enruta operaciones de larga duración al canal de mensajería asíncrona (según ADR-002)
-- Gestiona manejo de errores y respuestas de fallback
+- Orchestration layer: composes multiple System API calls to build business operations
+- Implements business logic: quote orchestration, policy issuance, claims intake
+- Applies resilience patterns: retry with exponential backoff + jitter, circuit breaker, idempotency key validation
+- Routes long-running operations to the async messaging layer (per ADR-002)
+- Manages error handling and fallback responses
 
 **System APIs**
-- Conectores delgados hacia sistemas de backend — sin lógica de negocio
-- Salesforce System API: expone objetos de Salesforce (Account, Opportunity, Policy__c, Claim__c) como recursos REST
+- Thin connectors to backend systems — no business logic
+- Salesforce System API: exposes Salesforce objects (Account, Opportunity, Policy__c, Claim__c) as REST resources
 - Payment Gateway System API
 - Document Generation System API
-- Conectores a sistemas legados por país
+- Per-country legacy system connectors
 
-#### Capa 3 — Sistemas Core
+#### Layer 3 — Core Systems
 
-- **Salesforce:** Core de seguros (pólizas, siniestros, clientes, productos) — sistema de registro
-- **Pasarela de Pagos:** Recaudo de primas y reembolsos
-- **Servicio de Documentos:** Pólizas, certificados, informes de siniestros
-- **Servicio de Notificaciones:** Email, SMS, notificaciones push
-- **Sistemas por País:** Sistemas regulatorios locales, proveedores de pago locales
+- **Salesforce:** Insurance core (policies, claims, customers, products) — system of record
+- **Payment Gateway:** Premium collection and refunds
+- **Document Service:** Policies, certificates, claims reports
+- **Notification Service:** Email, SMS, push notifications
+- **Per-Country Systems:** Local regulatory systems, local payment providers
 
-#### Capa 4 — Capa de Mensajería Asíncrona
+#### Layer 4 — Async Messaging Layer
 
-Para flujos de larga duración y alto volumen (según ADR-002):
+For long-running and high-volume flows (per ADR-002):
 
-- Broker de mensajes (Anypoint MQ o equivalente cloud-native)
-- Cola de mensajes fallidos (Dead Letter Queue - DLQ) para eventos con fallo de procesamiento
-- Capacidad de replay de eventos para recuperación ante incidentes
-- Consumer groups por país para aislar fallos de procesamiento
+- Message broker (Anypoint MQ or cloud-native equivalent)
+- Dead Letter Queue (DLQ) for events that fail processing
+- Event replay capability for incident recovery
+- Per-country consumer isolation to contain processing failures
 
-#### Capa 5 — Plataforma de Observabilidad
+#### Layer 5 — Observability Platform
 
-- **Trazas Distribuidas:** OpenTelemetry SDK en runtimes de MuleSoft; contexto de traza propagado via headers W3C Trace Context en límites síncronos y asíncronos
-- **Logging Centralizado:** Logs JSON estructurados agregados en plataforma de gestión de logs (Splunk, ELK o Anypoint Monitoring)
-- **Métricas:** Tasa de error, latencia promedio y en el percentil 95 (tiempo que tarda el 95% de las peticiones), estado del circuit breaker, tasa de reintentos, profundidad de cola, retraso del consumidor de mensajes — por API y por país
-- **Alertas:** Alertas basadas en el margen de error permitido por el acuerdo de nivel de servicio (SLO) que activan respuesta del equipo de operaciones
+- **Distributed Traces:** OpenTelemetry SDK on MuleSoft runtimes; trace context propagated via W3C Trace Context headers across synchronous and asynchronous boundaries
+- **Centralized Logging:** Structured JSON logs aggregated in a log management platform (Splunk, ELK, or Anypoint Monitoring)
+- **Metrics:** Error rate, average latency and 95th percentile (time taken by 95% of requests), circuit breaker state, retry rate, queue depth, message consumer lag — per API and per country
+- **Alerts:** Alerts based on the allowed error margin of the service level agreement (SLO) that trigger on-call response
 
 ---
 
-### Patrones de Integración Aplicados
+### Integration Patterns Applied
 
-#### Reintento con Backoff Exponencial y Jitter
-Aplicado en la capa Process API para fallos transitorios (timeouts de red, respuestas 5xx de System APIs). Evita el thundering herd durante la recuperación del backend. Fórmula: `espera = min(cap, base * 2^intento) + jitter_aleatorio`.
+#### Retry with Exponential Backoff and Jitter
+Applied at the Process API layer for transient failures (network timeouts, 5xx responses from System APIs). Avoids simultaneous retry avalanches during backend recovery. Formula: `wait = min(cap, base * 2^attempt) + random_jitter`.
 
 #### Circuit Breaker
-Cada conector de System API está envuelto por un circuit breaker. Tras un umbral de fallos configurable, el circuito se abre y retorna una respuesta de fallo rápido — protegiendo a Salesforce y otros backends de sobrecarga en cascada. Estados: Cerrado → Abierto → Semi-abierto → Cerrado.
+Each System API connector is wrapped by a circuit breaker. After a configurable failure threshold, the circuit opens and returns a fast-fail response — protecting Salesforce and other backends from cascading overload. States: Closed → Open → Half-Open → Closed.
 
-#### Idempotencia
-Toda operación mutante (emisión de póliza, procesamiento de pago) requiere una clave de idempotencia en el header de la petición. La capa Process API deduplica peticiones dentro de una ventana de tiempo configurable, evitando registros duplicados en Salesforce por peticiones reintentadas.
+#### Idempotency
+Every mutating operation (policy issuance, payment processing) requires an idempotency key in the request header. The Process API layer deduplicates requests within a configurable time window, preventing duplicate records in Salesforce from retried requests.
 
-#### Bulkhead (Mamparo)
-El patrón bulkhead aplica aislamiento de recursos en dos niveles:
+#### Bulkhead
+The bulkhead pattern applies resource isolation at two levels:
 
-1. **Capa Experience API:** Cada canal tiene su propio pool de hilos y límite de rate limiting. Si el portal web recibe un pico de tráfico o un ataque, solo su Experience API se ve afectada — la app móvil y el portal de corredores siguen operando normalmente. Ningún canal puede agotar los recursos de otro.
+1. **Experience API layer:** Each channel has its own thread pool and rate limit. If the web portal receives a traffic spike or an attack, only its Experience API is affected — the mobile app and broker portal keep operating normally. No channel can exhaust another's resources.
 
-2. **Capa Process API / Sistema:** Los thread pools de MuleSoft están particionados por país y por nivel de criticidad del flujo. Un aluvión de peticiones para Colombia no agota los hilos que atienden a Venezuela. Los flujos críticos (cotización, pago) están aislados de los flujos batch y de reportes.
+2. **Process API / System layer:** MuleSoft thread pools are partitioned by country and by flow criticality. A flood of requests for Colombia does not exhaust the threads serving Venezuela. Critical flows (quotes, payments) are isolated from batch and reporting flows.
 
-El resultado es que un fallo o pico en cualquier canal o país queda contenido — no se propaga al resto del sistema.
+The result is that a failure or spike in any channel or country is contained — it does not propagate to the rest of the system.
 
-#### Caché
-- **Caché de cotizaciones:** Catálogo de productos y precios cacheado en la capa Experience API (TTL: 5 minutos) — reduce llamadas a la API de Salesforce para peticiones de cotización de alta frecuencia
-- **Caché de tokens:** Tokens de acceso OAuth cacheados hasta su expiración — elimina el overhead de autenticación por petición
-- **Caché de datos de referencia:** Configuración por país, catálogo de productos, reglas de cobertura — refrescados por schedule, no por petición
+#### Cache
+- **Quote cache:** Product catalog and pricing cached at the Experience API layer (TTL: 5 minutes) — reduces Salesforce API calls for high-frequency quote requests
+- **Token cache:** OAuth access tokens cached until expiry — eliminates per-request authentication overhead
+- **Reference data cache:** Per-country configuration, product catalog, coverage rules — refreshed on schedule, not per request
 
-#### Mensajería Asíncrona
-La emisión de pólizas, notificación de siniestros y sincronización de datos entre países se enrutan a la capa de mensajería asíncrona (según ADR-002). Los productores (Process APIs) publican eventos y retornan un acuse de recibo inmediatamente. Los consumidores procesan eventos de forma independiente con soporte de reintento y DLQ.
-
----
-
-### Alta Disponibilidad y Escalabilidad
-
-- MuleSoft CloudHub 2.0 (o Runtime Fabric on-premises): despliegue activo-activo en múltiples zonas de disponibilidad
-- Reglas de auto-escalado basadas en utilización de CPU y profundidad de cola de mensajes
-- Volumen de llamadas a la API de Salesforce gestionado mediante aislamiento por bulkhead — cada país tiene una aplicación conectada de Salesforce (Connected App) dedicada con su propia asignación de límites de API
-- Load balancer con health checks en la capa Experience API — workers no saludables removidos de la rotación sin downtime
-- HA en la capa de base de datos para el almacén de claves de idempotencia (caché distribuido, p. ej. Redis) con replicación
+#### Async Messaging
+Policy issuance, claims notification, and cross-country data synchronization are routed to the async messaging layer (per ADR-002). Producers (Process APIs) publish events and return an acknowledgment immediately. Consumers process events independently with retry and DLQ support.
 
 ---
 
-## 2. Diagrama de Arquitectura
+### High Availability and Scalability
 
-![Diagrama de Arquitectura](../diagrams/architecture.png)
+- MuleSoft CloudHub 2.0 (or Runtime Fabric on-premises): active-active deployment across multiple availability zones
+- Auto-scaling rules based on CPU utilization and message queue depth
+- Salesforce API call volume managed through bulkhead isolation — each country has a dedicated Salesforce Connected App with its own API limit allocation
+- Load balancer with health checks at the Experience API layer — unhealthy workers removed from rotation without downtime
+- HA at the database layer for the idempotency key store (distributed cache, e.g. Redis) with replication
+
+---
+
+## 2. Architecture Diagram
+
+![Architecture Diagram](../diagrams/architecture.png)
 
 
 ---
 
-## 3. Hoja de Ruta Técnica — 12 Semanas
+## 3. Technical Roadmap — 12 Weeks
 
-Tres flujos de trabajo paralelos ejecutados durante 12 semanas:
+Three parallel workstreams executed over 12 weeks:
 
-#### Track 1 — Confiabilidad
+#### Track 1 — Reliability
 
-| Semana | Actividad |
+| Week | Activity |
 |:---:|---|
-| 1 | Auditar configuraciones actuales de circuit breaker y reintento en todas las APIs de MuleSoft |
-| 2 | Definir SLOs por API (disponibilidad, latencia p95, tasa de error) |
-| 3 | Implementar aislamiento de thread pool por bulkhead por país en MuleSoft |
-| 4 | Desplegar validación de clave de idempotencia para todas las Process APIs mutantes |
-| 5 | Implementar reintento con backoff exponencial + jitter en todas las llamadas a System APIs |
-| 6 | Revisión de confiabilidad: pruebas de fallo controlado (chaos engineering) en escenarios de circuit breaker |
-| 7 | Implementar capa de caché: catálogo de productos, tokens OAuth |
-| 8 | Pruebas de carga: validar auto-escalado y aislamiento por bulkhead bajo tráfico pico |
-| 9 | Implementar procesamiento y alertas de Dead Letter Queue |
-| 10 | Pruebas de fallo controlado: simular degradación de Salesforce; validar circuit breaker y fallback |
-| 11 | Validación de HA multi-país: simular fallo de zona de disponibilidad |
-| 12 | Cierre: todos los SLOs cumplidos, todos los caminos críticos probados |
+| 1 | Audit existing circuit breaker and retry configurations across all MuleSoft APIs |
+| 2 | Define SLOs per API (availability, p95 latency, error rate) |
+| 3 | Implement bulkhead thread pool isolation per country in MuleSoft |
+| 4 | Deploy idempotency key validation for all mutating Process APIs |
+| 5 | Implement retry with exponential backoff + jitter for all System API calls |
+| 6 | Reliability review: controlled failure tests (chaos engineering) on circuit breaker scenarios |
+| 7 | Implement cache layer: product catalog, OAuth tokens |
+| 8 | Load testing: validate auto-scaling and bulkhead isolation under peak traffic |
+| 9 | Implement Dead Letter Queue processing and alerting |
+| 10 | Controlled failure tests: simulate Salesforce degradation; validate circuit breaker and fallback |
+| 11 | Multi-country HA validation: simulate availability zone failure |
+| 12 | Closure: all SLOs met, all critical paths tested |
 
-#### Track 2 — Modernización de Integración
+#### Track 2 — Integration Modernization
 
-| Semana | Actividad |
+| Week | Activity |
 |:---:|---|
-| 1 | Inventariar todas las System APIs existentes e identificar duplicación entre países |
-| 2 | Establecer estándares de diseño de API y política de versionamiento semántico (ej. v1.2.3) |
-| 3 | Refactorizar conectores duplicados por país en System APIs compartidas |
-| 4 | Migrar las 3 integraciones de mayor tráfico al nuevo patrón de System API |
-| 5 | Implementar mensajería asíncrona para el flujo de emisión de pólizas |
-| 6 | Implementar mensajería asíncrona para el flujo de notificación de siniestros |
-| 7 | Publicar plantillas reutilizables de Experience API en Anypoint Exchange |
-| 8 | Migrar segundo lote de integraciones por país al patrón compartido de System API |
-| 9 | Implementar idempotencia en el consumidor de mensajes (deduplicación asíncrona) |
-| 10 | Revisión de gobierno de APIs: deprecar integraciones directas legadas |
-| 11 | Completar librería de assets en Anypoint Exchange: todas las APIs reutilizables documentadas |
-| 12 | Cierre: sin integraciones directas a Salesforce que eviten MuleSoft |
+| 1 | Inventory all existing System APIs and identify duplication across countries |
+| 2 | Establish API design standards and semantic versioning policy (e.g. v1.2.3) |
+| 3 | Refactor per-country duplicate connectors into shared System APIs |
+| 4 | Migrate the 3 highest-traffic integrations to the new System API pattern |
+| 5 | Implement async messaging for the policy issuance flow |
+| 6 | Implement async messaging for the claims notification flow |
+| 7 | Publish reusable Experience API templates to Anypoint Exchange |
+| 8 | Migrate second batch of per-country integrations to the shared System API pattern |
+| 9 | Implement idempotency on the message consumer (async deduplication) |
+| 10 | API governance review: deprecate legacy direct integrations |
+| 11 | Complete Anypoint Exchange asset library: all reusable APIs documented |
+| 12 | Closure: no direct Salesforce integrations bypassing MuleSoft |
 
-#### Track 3 — Observabilidad y Operaciones
+#### Track 3 — Observability and Operations
 
-| Semana | Actividad |
+| Week | Activity |
 |:---:|---|
-| 1 | Desplegar OpenTelemetry collector; instrumentar las 5 Process APIs críticas principales |
-| 2 | Implementar logging JSON estructurado con propagación de correlation ID |
-| 3 | Construir primer dashboard de métricas: tasa de error, latencia, estado del circuit breaker |
-| 4 | Definir reglas de alerta basadas en el margen de error permitido por el acuerdo de nivel de servicio (SLO) |
-| 5 | Instrumentar flujos asíncronos: profundidad de cola, retraso del consumidor de mensajes, tasa de DLQ |
-| 6 | Primer runbook on-call: circuit breaker abierto, pico de DLQ, degradación de latencia |
-| 7 | Trazas distribuidas end-to-end: propagación de traza en límites síncronos y asíncronos |
-| 8 | Revisión de SLOs: ajustar umbrales con base en 4 semanas de datos reales de operación |
-| 9 | Informe de planeación de capacidad: límites de API de Salesforce por país, utilización de workers |
-| 10 | Finalizar runbook on-call para todos los escenarios P1/P2 |
-| 11 | Informe ejecutivo de observabilidad: cumplimiento de SLOs, tendencias de incidentes |
-| 12 | Cierre: trazas, logs, métricas, alertas y runbooks completamente operativos |
+| 1 | Deploy OpenTelemetry collector; instrument the top 5 critical Process APIs |
+| 2 | Implement structured JSON logging with correlation ID propagation |
+| 3 | Build first metrics dashboard: error rate, latency, circuit breaker state |
+| 4 | Define alert rules based on the allowed error margin of the service level agreement (SLO) |
+| 5 | Instrument async flows: queue depth, message consumer lag, DLQ rate |
+| 6 | First on-call runbook: open circuit breaker, DLQ spike, latency degradation |
+| 7 | End-to-end distributed traces: trace propagation across sync and async boundaries |
+| 8 | SLO review: adjust thresholds based on 4 weeks of real operational data |
+| 9 | Capacity planning report: Salesforce API limits per country, MuleSoft worker utilization |
+| 10 | Finalize on-call runbook for all P1/P2 scenarios |
+| 11 | Executive observability report: SLO compliance, incident trends |
+| 12 | Closure: traces, logs, metrics, alerts, and runbooks fully operational |
 
-### Resumen de Flujos de Trabajo
+### Workstream Summary
 
-**Confiabilidad** — Semanas 1–12: Establecer y hacer cumplir patrones de resiliencia (circuit breaker, reintento, bulkhead, idempotencia, caché) en todos los flujos de integración. Validar bajo condiciones reales de fallo.
+**Reliability** — Weeks 1–12: Establish and enforce resilience patterns (circuit breaker, retry, bulkhead, idempotency, cache) across all integration flows. Validate under real failure conditions.
 
-**Modernización de Integración** — Semanas 1–12: Consolidar integraciones fragmentadas por país en una capa de System APIs compartida. Eliminar el acceso directo a Salesforce. Publicar assets reutilizables en Anypoint Exchange. Adoptar mensajería asíncrona para flujos de larga duración.
+**Integration Modernization** — Weeks 1–12: Consolidate fragmented per-country integrations into a shared System API layer. Eliminate direct Salesforce access. Publish reusable assets to Anypoint Exchange. Adopt async messaging for long-running flows.
 
-**Observabilidad y Operaciones** — Semanas 1–12: Instrumentar todos los flujos críticos con OpenTelemetry. Construir dashboards, definir SLOs, configurar alertas y producir runbooks operativos. Transitar de operaciones reactivas a proactivas.
+**Observability and Operations** — Weeks 1–12: Instrument all critical flows with OpenTelemetry. Build dashboards, define SLOs, configure alerts, and produce operational runbooks. Transition from reactive to proactive operations.

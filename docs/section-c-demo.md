@@ -1,127 +1,127 @@
-# Sección C – Servicio Demo y Prueba de Confiabilidad
+# Section C – Demo Service and Reliability Testing
 
 ---
 
-## Visión General
+## Overview
 
-El servicio demo simula una **Process API de Emisión de Pólizas** que llama a una **Salesforce System API** usando el framework de integración de la Sección B. El sistema upstream es intencionalmente inestable — simula las condiciones de fallo que una integración de seguros real enfrenta en producción.
+The demo service simulates a **Policy Issuance Process API** that calls a **Salesforce System API** using the Section B integration framework. The upstream system is intentionally unstable — it simulates the failure conditions a real insurance integration faces in production.
 
-El demo no requiere dependencias externas y se ejecuta con un solo comando.
+The demo requires no external dependencies and runs with a single command.
 
 ---
 
-## Cómo Ejecutarlo
+## How to Run
 
-**Requisitos:** Python 3.8+
+**Requirements:** Python 3.8+
 
 ```bash
-# Desde la raíz del repositorio
+# From the repository root
 python src/demo.py
 ```
 
-Sin paquetes adicionales. El servidor upstream inestable corre en el mismo proceso en el puerto 9999.
+No additional packages needed. The unstable upstream server runs in the same process on port 9999.
 
 ---
 
-## Qué Demuestra el Demo
+## What the Demo Shows
 
-### Arquitectura
+### Architecture
 
 ```
-Servicio Demo (API de Emisión de Pólizas)
+Demo Service (Policy Issuance API)
     │
     ├── IntegrationClient (framework.py)
-    │       ├── Verificación de idempotencia
-    │       ├── Verificación del circuit breaker
-    │       ├── Llamada HTTP con timeout (5s)
-    │       ├── Reintento + backoff exponencial + jitter
-    │       └── Logging estructurado + propagación de traza
+    │       ├── Idempotency check
+    │       ├── Circuit breaker check
+    │       ├── HTTP call with timeout (5s)
+    │       ├── Retry + exponential backoff + jitter
+    │       └── Structured logging + trace propagation
     │
-    └──> Upstream Inestable (Salesforce System API simulada :9999)
-              ├── 30% éxito (HTTP 200)
-              ├── 60% fallo transitorio (HTTP 503)
-              └── 10% timeout (respuesta después de 8s > timeout cliente 5s)
+    └──> Unstable Upstream (simulated Salesforce System API :9999)
+              ├── 30% success (HTTP 200)
+              ├── 60% transient failure (HTTP 503)
+              └── 10% timeout (response after 8s > client timeout 5s)
 ```
 
 ---
 
-## Escenarios de Fallo Demostrados
+## Failure Scenarios Demonstrated
 
-### Escenario 1 — Reintento bajo Fallos Transitorios
+### Scenario 1 — Retry under Transient Failures
 
-El upstream retorna HTTP 503 de forma aleatoria. El framework reintenta hasta 3 veces con backoff exponencial + jitter antes de rendirse.
+The upstream returns HTTP 503 randomly. The framework retries up to 3 times with exponential backoff + jitter before giving up.
 
-**Ejemplo de salida en consola:**
+**Example console output:**
 ```json
-{"nivel": "advertencia", "evento": "llamada_fallida_reintentando",
- "url": "http://localhost:9999/v1/polizas",
- "intento": 0, "error": "HTTP 503 de ...", "espera_segundos": 0.52, "trace_id": "4bf92f..."}
+{"level": "warning", "event": "call_failed_retrying",
+ "url": "http://localhost:9999/v1/policies",
+ "attempt": 0, "error": "HTTP 503 from ...", "wait_seconds": 0.52, "trace_id": "4bf92f..."}
 
-{"nivel": "advertencia", "evento": "llamada_fallida_reintentando",
- "url": "http://localhost:9999/v1/polizas",
- "intento": 1, "error": "HTTP 503 de ...", "espera_segundos": 1.18, "trace_id": "4bf92f..."}
+{"level": "warning", "event": "call_failed_retrying",
+ "url": "http://localhost:9999/v1/policies",
+ "attempt": 1, "error": "HTTP 503 from ...", "wait_seconds": 1.18, "trace_id": "4bf92f..."}
 
-{"nivel": "info", "evento": "llamada_exitosa",
- "url": "http://localhost:9999/v1/polizas", "intento": 2, "trace_id": "4bf92f..."}
+{"level": "info", "event": "call_succeeded",
+ "url": "http://localhost:9999/v1/policies", "attempt": 2, "trace_id": "4bf92f..."}
 ```
 
-**Cómo la resiliencia mitiga el problema:** El cliente reintenta automáticamente. El servicio llamador recibe una respuesta exitosa sin conocer los fallos subyacentes. El backoff progresivo le da tiempo al upstream para recuperarse entre intentos.
+**How resilience mitigates the problem:** The client retries automatically. The calling service receives a successful response without knowing about the underlying failures. Progressive backoff gives the upstream time to recover between attempts.
 
 ---
 
-### Escenario 2 — Timeout por Petición
+### Scenario 2 — Per-Request Timeout
 
-El upstream duerme por 8 segundos. El cliente aplica un timeout de 5 segundos, falla rápido y reintenta.
+The upstream sleeps for 8 seconds. The client applies a 5-second timeout, fails fast, and retries.
 
-**Cómo la resiliencia mitiga el problema:** Sin timeout, el hilo del cliente se bloquearía por 8+ segundos — violando el SLA del servicio llamador (p. ej., un usuario web esperando una cotización). El timeout fuerza un fallo rápido, permitiendo que el reintento potencialmente alcance un worker sano del upstream.
+**How resilience mitigates the problem:** Without a timeout, the client thread would be blocked for 8+ seconds — violating the calling service's SLA (e.g., a web user waiting for a quote). The timeout forces a fast fail, allowing the retry to potentially reach a healthy upstream worker.
 
 ---
 
-### Escenario 3 — Circuit Breaker se Abre
+### Scenario 3 — Circuit Breaker Opens
 
-Tras 3 fallos consecutivos (umbral del demo), el circuito se abre. Las llamadas posteriores se rechazan inmediatamente sin tocar el upstream.
+After 3 consecutive failures (demo threshold), the circuit opens. Subsequent calls are rejected immediately without touching the upstream.
 
-**Ejemplo de salida en consola:**
+**Example console output:**
 ```json
-{"nivel": "advertencia", "evento": "circuit_breaker_abierto",
+{"level": "warning", "event": "circuit_breaker_opened",
  "circuit": "salesforce-system-api",
- "cantidad_fallos": 3, "segundos_recuperacion": 10.0}
+ "failure_count": 3, "recovery_seconds": 10.0}
 
-{"nivel": "advertencia", "evento": "circuit_breaker_rechazado",
- "url": "http://localhost:9999/v1/polizas",
+{"level": "warning", "event": "circuit_breaker_rejected",
+ "url": "http://localhost:9999/v1/policies",
  "circuit": "salesforce-system-api", "trace_id": "7c3a1f..."}
 ```
 
-**Cómo la resiliencia mitiga el problema:** El circuit breaker deja de golpear el upstream que ya está fallando, dándole espacio para recuperarse. El llamador recibe un `CircuitBreakerOpenError` rápido y predecible — en lugar de esperar múltiples timeouts y reintentos.
+**How resilience mitigates the problem:** The circuit breaker stops hitting the already-failing upstream, giving it space to recover. The caller receives a fast, predictable `CircuitBreakerOpenError` — instead of waiting through multiple timeouts and retries.
 
 ---
 
-### Escenario 4 — Acierto en Caché de Idempotencia
+### Scenario 4 — Idempotency Cache Hit
 
-Una petición con una clave de idempotencia previamente exitosa es reenviada. El framework retorna la respuesta cacheada sin realizar ninguna llamada de red.
+A request with a previously successful idempotency key is resubmitted. The framework returns the cached response without making any network call.
 
-**Ejemplo de salida en consola:**
+**Example console output:**
 ```json
-{"nivel": "info", "evento": "cache_idempotencia_hit",
- "clave_idempotencia": "demo-poliza-001", "trace_id": "4bf92f..."}
+{"level": "info", "event": "idempotency_cache_hit",
+ "idempotency_key": "demo-policy-001", "trace_id": "4bf92f..."}
 ```
 
-**Cómo la resiliencia mitiga el problema:** En producción, un cliente móvil podría reintentar una solicitud de emisión de póliza tras una caída de red. Sin idempotencia, Salesforce crearía una póliza duplicada. La clave de idempotencia garantiza que la operación se ejecute exactamente una vez — incluso a través de múltiples reintentos.
+**How resilience mitigates the problem:** In production, a mobile client might retry a policy issuance request after a network drop. Without idempotency, Salesforce would create a duplicate policy. The idempotency key guarantees the operation executes exactly once — even across multiple retries.
 
 ---
 
-## Salida de Observabilidad
+## Observability Output
 
-Cada evento produce una entrada de log JSON estructurado visible en consola. En producción, estas entradas fluyen a la plataforma centralizada de agregación de logs. El campo `trace_id` vincula todas las entradas de log de una misma cadena de petición — a través de reintentos, servicios y límites síncronos/asíncronos.
+Each event produces a structured JSON log entry visible in the console. In production, these entries flow to the centralized log aggregation platform. The `trace_id` field links all log entries from the same request chain — across retries, services, and synchronous/asynchronous boundaries.
 
 ---
 
-## Equivalentes en Producción
+## Production Equivalents
 
-| Componente del Demo | Equivalente en Producción |
+| Demo Component | Production Equivalent |
 |---|---|
-| Servidor HTTP inestable en proceso | Salesforce System API bajo degradación |
-| Almacén de idempotencia en memoria | Caché distribuido Redis con TTL |
-| Contexto de traza con `print()` | OpenTelemetry SDK → Collector → Jaeger/Datadog |
-| Proceso Python único | Worker de MuleSoft CloudHub con múltiples réplicas |
-| `CircuitBreakerOpenError` | Error handler de MuleSoft retornando HTTP 503 + header Retry-After |
+| In-process unstable HTTP server | Salesforce System API under degradation |
+| In-memory idempotency store | Redis distributed cache with TTL |
+| Trace context with `print()` | OpenTelemetry SDK → Collector → Jaeger/Datadog |
+| Single Python process | MuleSoft CloudHub worker with multiple replicas |
+| `CircuitBreakerOpenError` | MuleSoft error handler returning HTTP 503 + Retry-After header |

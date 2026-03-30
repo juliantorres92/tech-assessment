@@ -1,18 +1,18 @@
-# Sección B – Framework de Integración Reutilizable
+# Section B – Reusable Integration Framework
 
 ---
 
-## Visión General
+## Overview
 
-El framework de integración es un módulo Python reutilizable ([`src/framework.py`](../src/framework.py)) que provee un punto de entrada único para todas las llamadas HTTP salientes de un servicio. Toda integración pasa por este cliente — los patrones de resiliencia se aplican una sola vez aquí, sin duplicarlos en cada punto de integración.
+The integration framework is a reusable Python module ([`src/framework.py`](../src/framework.py)) that provides a single entry point for all outbound HTTP calls from a service. Every integration goes through this client — resilience patterns are applied once here, without duplicating them at each integration point.
 
 ---
 
-## Componentes
+## Components
 
-### 1. Configuración Centralizada (`IntegrationConfig`)
+### 1. Centralized Configuration (`IntegrationConfig`)
 
-Todos los parámetros ajustables se declaran en un único dataclass. En producción, estos valores se cargan desde variables de entorno o un servicio de configuración (propiedades de MuleSoft, AWS Parameter Store, etc.).
+All tunable parameters are declared in a single dataclass. In production, these values are loaded from environment variables or a configuration service (MuleSoft properties, AWS Parameter Store, etc.).
 
 ```python
 config = IntegrationConfig(
@@ -23,117 +23,117 @@ config = IntegrationConfig(
     timeout_seconds=5.0,
     circuit_breaker_failure_threshold=5,
     circuit_breaker_recovery_seconds=30.0,
-    service_name="api-emision-polizas"
+    service_name="policy-issuance-api"
 )
 ```
 
-**Decisión de diseño:** Centralizar la configuración evita números mágicos dispersos en el código y permite ajuste en runtime sin cambios de código.
+**Design decision:** Centralizing configuration avoids magic numbers scattered across the code and allows runtime tuning without code changes.
 
 ---
 
-### 2. Reintento con Backoff Exponencial y Jitter
+### 2. Retry with Exponential Backoff and Jitter
 
-**Fórmula:** `espera = min(cap, base × 2^intento) + jitter_aleatorio`
+**Formula:** `wait = min(cap, base × 2^attempt) + random_jitter`
 
-| Intento | Demora base | Con cap | + Jitter (30%) | Espera aprox. |
+| Attempt | Base delay | With cap | + Jitter (30%) | Approx. wait |
 |---|---|---|---|---|
-| 0 (1er reintento) | 0.5s | 0.5s | ±0.15s | ~0.5–0.65s |
-| 1 (2do reintento) | 1.0s | 1.0s | ±0.30s | ~1.0–1.30s |
-| 2 (3er reintento) | 2.0s | 2.0s | ±0.60s | ~2.0–2.60s |
+| 0 (1st retry) | 0.5s | 0.5s | ±0.15s | ~0.5–0.65s |
+| 1 (2nd retry) | 1.0s | 1.0s | ±0.30s | ~1.0–1.30s |
+| 2 (3rd retry) | 2.0s | 2.0s | ±0.60s | ~2.0–2.60s |
 
-**Por qué backoff exponencial:** Las demoras progresivas le dan al sistema downstream tiempo creciente para recuperarse entre intentos. Un intervalo de reintento fijo puede sobrecargar un backend en recuperación parcial.
+**Why exponential backoff:** Progressive delays give the downstream system increasing time to recover between attempts. A fixed retry interval can overload a partially recovering backend.
 
-**Por qué jitter:** Cuando múltiples clientes fallan simultáneamente (p. ej., una interrupción breve de red), todos reintentan en el mismo intervalo si no hay jitter — creando una avalancha de reintentos simultáneos que impide al backend en recuperación estabilizarse. El jitter distribuye los reintentos en el tiempo, suavizando la carga.
+**Why jitter:** When multiple clients fail simultaneously (e.g., a brief network outage), they all retry at the same interval without jitter — creating a simultaneous retry avalanche that prevents the recovering backend from stabilizing. Jitter spreads retries over time, smoothing the load.
 
-**Por qué 3 reintentos:** Basado en las ventanas de fallo transitorio observadas — la mayoría de errores transitorios se resuelven en 2 reintentos. Un 4to reintento agrega latencia sin beneficio proporcional y puede comprometer el SLO del servicio llamador.
+**Why 3 retries:** Based on observed transient failure windows — most transient errors resolve within 2 retries. A 4th retry adds latency without proportional benefit and may compromise the calling service's SLO.
 
 ---
 
 ### 3. Circuit Breaker
 
-Máquina de tres estados que protege los sistemas downstream de sobrecarga durante ventanas de fallo:
+Three-state machine that protects downstream systems from overload during failure windows:
 
 ```
-CERRADO ──(umbral de fallos)──> ABIERTO ──(ventana de recuperación)──> SEMI-ABIERTO
-   ^                                                                          |
-   └────────────────────(llamada de prueba exitosa)────────────────────────────┘
+CLOSED ──(failure threshold)──> OPEN ──(recovery window)──> HALF-OPEN
+   ^                                                               |
+   └──────────────────(successful probe call)─────────────────────┘
 ```
 
-| Estado | Comportamiento |
+| State | Behavior |
 |---|---|
-| **Cerrado** | Operación normal. Los fallos se cuentan. |
-| **Abierto** | Todas las llamadas se rechazan inmediatamente (fallo rápido). El sistema downstream descansa. |
-| **Semi-abierto** | Se permite una llamada de prueba. Éxito → Cerrado. Fallo → Abierto. |
+| **Closed** | Normal operation. Failures are counted. |
+| **Open** | All calls are rejected immediately (fast fail). The downstream system rests. |
+| **Half-Open** | One probe call is allowed. Success → Closed. Failure → Open. |
 
-**Por qué el circuit breaker es importante:** Sin él, las tormentas de reintentos de múltiples clientes golpean un sistema downstream en fallo — impidiéndole recuperarse. El circuit breaker rompe este ciclo deteniendo las llamadas completamente durante la ventana de recuperación.
+**Why the circuit breaker matters:** Without it, retry storms from multiple clients hit a failing downstream system — preventing it from recovering. The circuit breaker breaks this cycle by stopping calls entirely during the recovery window.
 
-**Configuración:** 5 fallos → Abierto; 30s de ventana de recuperación antes de la llamada de prueba Semi-abierto.
-
----
-
-### 4. Timeout por Petición
-
-Cada llamada HTTP está acotada por un timeout configurable (por defecto: 5 segundos). Esto evita que un sistema downstream lento bloquee indefinidamente un hilo — crítico en flujos síncronos orientados al usuario, donde el presupuesto total de tiempo de respuesta está acotado por el SLA del servicio llamador.
-
-**Decisión de diseño:** El timeout siempre se configura menor que el timeout del servicio llamador, para garantizar que el framework pueda manejar el fallo con gracia antes de que venza el plazo del llamador.
+**Configuration:** 5 failures → Open; 30s recovery window before Half-Open probe call.
 
 ---
 
-### 5. Soporte de Clave de Idempotencia
+### 4. Per-Request Timeout
 
-Las operaciones mutantes (POST, PUT, PATCH) aceptan una clave de idempotencia. El framework almacena las respuestas exitosas indexadas por ese valor. Las peticiones duplicadas retornan la respuesta cacheada inmediatamente sin hacer una llamada de red.
+Every HTTP call is bounded by a configurable timeout (default: 5 seconds). This prevents a slow downstream system from blocking a thread indefinitely — critical in user-facing synchronous flows where the total response time budget is bounded by the calling service's SLA.
+
+**Design decision:** The timeout is always configured lower than the calling service's own timeout, to ensure the framework can handle the failure gracefully before the caller's deadline expires.
+
+---
+
+### 5. Idempotency Key Support
+
+Mutating operations (POST, PUT, PATCH) accept an idempotency key. The framework stores successful responses indexed by that value. Duplicate requests return the cached response immediately without making a network call.
 
 ```python
-respuesta = cliente.call(
-    url="https://salesforce-api/polizas",
+response = client.call(
+    url="https://salesforce-api/policies",
     method="POST",
-    body={"account_id": "001...", "producto": "vida"},
-    idempotency_key="emision-poliza-req-abc123"
+    body={"account_id": "001...", "product": "life"},
+    idempotency_key="policy-issuance-req-abc123"
 )
 ```
 
-**Por qué la idempotencia es esencial para el reintento:** Sin ella, una petición que expiró por timeout pero que fue procesada por el sistema downstream (p. ej., Salesforce creó la póliza) generaría un registro duplicado al reintentar. La clave de idempotencia hace que los reintentos sean seguros.
+**Why idempotency is essential for retry:** Without it, a request that timed out but was already processed by the downstream system (e.g., Salesforce created the policy) would generate a duplicate record on retry. The idempotency key makes retries safe.
 
-**Implementación en producción:** El almacén sería un caché distribuido (Redis) compartido entre todos los workers de MuleSoft, con un TTL que coincide con la ventana máxima esperada de reintentos.
+**Production implementation:** The store would be a distributed cache (Redis) shared across all MuleSoft workers, with a TTL matching the maximum expected retry window.
 
 ---
 
-### 6. Logging Estructurado Unificado
+### 6. Unified Structured Logging
 
-Cada entrada de log es un objeto JSON con un esquema consistente:
+Each log entry is a JSON object with a consistent schema:
 
 ```json
 {
-  "nivel": "advertencia",
-  "evento": "llamada_fallida_reintentando",
+  "level": "warning",
+  "event": "call_failed_retrying",
   "timestamp": "2026-03-28T19:00:00Z",
-  "url": "https://salesforce-api/polizas",
-  "metodo": "POST",
-  "intento": 1,
-  "error": "HTTP 503 de ...: Servicio no disponible",
-  "espera_segundos": 1.23,
+  "url": "https://salesforce-api/policies",
+  "method": "POST",
+  "attempt": 1,
+  "error": "HTTP 503 from ...: Service Unavailable",
+  "wait_seconds": 1.23,
   "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736"
 }
 ```
 
-**Por qué logging estructurado:** Los logs en texto libre no pueden ser analizados o consultados de forma confiable en plataformas de agregación de logs (Splunk, ELK). Un esquema JSON fijo permite filtrar por `trace_id`, `clave_idempotencia` o tipo de `evento` en millones de entradas — esencial para el diagnóstico de incidentes.
+**Why structured logging:** Free-text logs cannot be reliably analyzed or queried in log aggregation platforms (Splunk, ELK). A fixed JSON schema allows filtering by `trace_id`, `idempotency_key`, or `event` type across millions of entries — essential for incident diagnosis.
 
 ---
 
-### 7. Propagación de Trazas con OpenTelemetry
+### 7. OpenTelemetry Trace Propagation
 
-Cada petición saliente lleva encabezados de traza (`traceparent`, `tracestate`) siguiendo el estándar W3C Trace Context — el formato universal para propagar el ID de traza entre servicios. Esto permite a la plataforma de observabilidad unir toda la cadena de llamadas — desde el canal digital a través de las Process APIs de MuleSoft hasta Salesforce y de regreso — incluso a través de límites de mensajería asíncrona.
+Each outbound request carries trace headers (`traceparent`, `tracestate`) following the W3C Trace Context standard — the universal format for propagating trace IDs between services. This allows the observability platform to join the full call chain — from the digital channel through MuleSoft Process APIs to Salesforce and back — even across async messaging boundaries.
 
 ```
 traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
 tracestate:  sura=00f067aa0ba902b7
 ```
 
-**En producción:** Reemplazar la clase `TraceContext` liviana con el paquete `opentelemetry-sdk`. El framework crea un registro por cada llamada saliente (span), captura estado y latencia, y los envía al OpenTelemetry Collector (que alimenta herramientas como Jaeger o Datadog para visualización).
+**In production:** Replace the lightweight `TraceContext` class with the `opentelemetry-sdk` package. The framework creates a record for each outbound call (span), captures status and latency, and exports them to the OpenTelemetry Collector (which feeds visualization tools like Jaeger or Datadog).
 
 ---
 
-## Ejemplo de Uso
+## Usage Example
 
 ```python
 from framework import IntegrationClient, IntegrationConfig, TraceContext
@@ -142,31 +142,31 @@ config = IntegrationConfig(
     max_retries=3,
     timeout_seconds=5.0,
     circuit_breaker_failure_threshold=5,
-    service_name="api-emision-polizas"
+    service_name="policy-issuance-api"
 )
 
-cliente = IntegrationClient(config=config, circuit_name="salesforce-system-api")
-traza = TraceContext()  # Span raíz para esta petición
+client = IntegrationClient(config=config, circuit_name="salesforce-system-api")
+trace = TraceContext()  # Root span for this request
 
-respuesta = cliente.call(
-    url="https://salesforce-system-api/polizas",
+response = client.call(
+    url="https://salesforce-system-api/policies",
     method="POST",
-    body={"account_id": "001ABC", "codigo_producto": "VIDA_COL"},
-    idempotency_key="emision-2026-03-28-001ABC-VIDA",
-    trace_context=traza
+    body={"account_id": "001ABC", "product_code": "LIFE_CO"},
+    idempotency_key="issuance-2026-03-28-001ABC-LIFE",
+    trace_context=trace
 )
 ```
 
 ---
 
-## Resumen de Decisiones de Diseño
+## Design Decisions Summary
 
-| Decisión | Justificación |
+| Decision | Rationale |
 |---|---|
-| Único punto de entrada `IntegrationClient` | Patrones de resiliencia aplicados una vez, no duplicados por integración |
-| Backoff exponencial con jitter | Evita thundering herd; da al sistema downstream tiempo progresivo de recuperación |
-| Circuit breaker separado del reintento | El reintento maneja errores transitorios; el circuit breaker maneja interrupciones sostenidas — modos de fallo distintos requieren respuestas distintas |
-| Idempotencia a nivel de framework | Reintentos seguros para todas las operaciones mutantes sin que el llamador lo gestione |
-| Logging JSON estructurado | Logs legibles por máquina para consultas confiables en plataformas de agregación |
-| Encabezados de traza estándar (W3C) | Formato universal de propagación de ID de traza; compatible con todas las plataformas de observabilidad principales |
-| Almacén de idempotencia en memoria (demo) | Equivalente en producción: Redis con TTL; misma interfaz, respaldo distribuido |
+| Single entry point `IntegrationClient` | Resilience patterns applied once, not duplicated per integration |
+| Exponential backoff with jitter | Avoids simultaneous retry avalanche; gives downstream system progressive recovery time |
+| Circuit breaker separate from retry | Retry handles transient errors; circuit breaker handles sustained outages — distinct failure modes require distinct responses |
+| Idempotency at framework level | Safe retries for all mutating operations without the caller managing it |
+| Structured JSON logging | Machine-readable logs for reliable queries in aggregation platforms |
+| W3C standard trace headers | Universal propagation format; compatible with all major observability platforms |
+| In-memory idempotency store (demo) | Production equivalent: Redis with TTL; same interface, distributed backing |
