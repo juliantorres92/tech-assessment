@@ -122,103 +122,6 @@ La emisión de pólizas, notificación de siniestros y sincronización de datos 
 
 ![Diagrama de Arquitectura](../diagrams/architecture.png)
 
-<!-- fuente editable: diagrams/architecture.mmd | diagrams/architecture.drawio -->
-
-<!--
-```mermaid
-graph TB
-    subgraph Channels["Canales Digitales   ·   CO | CL | VE | PE"]
-        WEB[Portal Web]
-        MOB[App Movil]
-        BRK[Portal de Corredores]
-        PRT[APIs de Socios]
-    end
-
-    APIGW["API Gateway   ·   Autenticacion OAuth 2.0   ·   Control de trafico   ·   Enrutamiento por pais"]
-
-    subgraph Experience["Experience APIs — MuleSoft   ·   Escalado automatico   ·   Alta Disponibilidad"]
-        EXP_WEB[Exp API Web]
-        EXP_MOB[Exp API Movil]
-        EXP_BRK[Exp API Corredor]
-        EXP_PRT[Exp API Socio]
-    end
-
-    subgraph Process["Process APIs — MuleSoft   ·   Circuit Breaker · Retry+Jitter · Bulkhead por pais · Idempotencia"]
-        PROC_QUOTE["API Cotizacion\nsincrona"]
-        PROC_POLICY["API Emision de Poliza\nsincrona + asincrona"]
-        PROC_CLAIM["API Ingreso de Siniestro\nasincrona"]
-    end
-
-    subgraph System["System APIs — MuleSoft"]
-        SYS_SF[API Salesforce FSC]
-        SYS_PAY[Conector Pagos]
-        SYS_DOC[API Documentos]
-        SYS_NOTIF[API Notificaciones]
-    end
-
-    REDIS["Cache Distribuido   ·   Almacen de claves de idempotencia · Cache de sesion"]
-
-    subgraph Core["Sistemas Core"]
-        SF["Salesforce FSC\n+ Omnistudio + Industries"]
-        PAY[Pasarela de Pagos]
-        DOC[Servicio de Documentos]
-        NOTIF["Notificaciones\nEmail / SMS / Push"]
-    end
-
-    subgraph Async["Mensajeria Asincrona"]
-        MQ["Anypoint MQ\nBroker de Mensajes"]
-        DLQ["Cola de Mensajes Fallidos\nReintentos agotados\n+ alerta al equipo"]
-    end
-
-    subgraph Obs["Observabilidad — OpenTelemetry"]
-        OTEL["Colector OpenTelemetry\ntrazas · metricas · logs"]
-        LOG["Logging Centralizado\nJSON estructurado"]
-        METRICS["Metricas\nen tiempo real"]
-        TRACES["Trazas Distribuidas\nseguimiento end-to-end"]
-        ALERT["Alertas\nNotificacion de incidentes"]
-        DASH["Dashboard Ejecutivo\ndisponibilidad por pais"]
-    end
-
-    WEB --> APIGW
-    MOB --> APIGW
-    BRK -->|OAuth 2.0| APIGW
-    PRT --> APIGW
-
-    APIGW -->|REST| Experience
-
-    EXP_WEB --> PROC_QUOTE
-    EXP_MOB --> PROC_QUOTE
-    EXP_BRK --> PROC_POLICY
-    EXP_PRT --> PROC_CLAIM
-
-    PROC_QUOTE --> SYS_SF
-    PROC_POLICY --> SYS_SF
-    PROC_POLICY --> SYS_PAY
-    PROC_CLAIM --> SYS_SF
-    PROC_CLAIM --> SYS_DOC
-
-    PROC_POLICY -.->|async| MQ
-    PROC_CLAIM -.->|async| MQ
-    MQ -.->|fallo| DLQ
-    MQ -.->|evento| SYS_NOTIF
-
-    System --> REDIS
-    REDIS --> Core
-
-    SYS_SF -->|REST| SF
-    SYS_PAY --> PAY
-    SYS_DOC --> DOC
-    SYS_NOTIF --> NOTIF
-
-    APIGW -.->|"OTel SDK en todas las capas MuleSoft"| OTEL
-    OTEL --> LOG
-    OTEL --> METRICS
-    LOG --> TRACES
-    METRICS --> ALERT
-    TRACES --> DASH
-    ALERT --> DASH
-```
--->
 
 ---
 
@@ -226,20 +129,56 @@ graph TB
 
 Tres flujos de trabajo paralelos ejecutados durante 12 semanas:
 
-| Semana | Confiabilidad | Modernización de Integración | Observabilidad y Operaciones |
-|---|---|---|---|
-| **1** | Auditar configuraciones actuales de circuit breaker y reintento en todas las APIs de MuleSoft | Inventariar todas las System APIs existentes e identificar duplicación entre países | Desplegar OpenTelemetry collector; instrumentar las 5 Process APIs críticas principales |
-| **2** | Definir SLOs por API (disponibilidad, latencia p95, tasa de error) | Establecer estándares de diseño de API y política de versionamiento (semver) | Implementar logging JSON estructurado con propagación de correlation ID |
-| **3** | Implementar aislamiento de thread pool por bulkhead por país en MuleSoft | Refactorizar conectores duplicados por país en System APIs compartidas | Construir primer dashboard de métricas: tasa de error, latencia, estado del circuit breaker |
-| **4** | Desplegar validación de clave de idempotencia para todas las Process APIs mutantes | Migrar las 3 integraciones de mayor tráfico al nuevo patrón de System API | Definir reglas de alerta basadas en tasa de consumo de error budget del SLO |
-| **5** | Implementar reintento con backoff exponencial + jitter en todas las llamadas a System APIs | Implementar mensajería asíncrona para el flujo de emisión de pólizas | Instrumentar flujos asíncronos: profundidad de cola, consumer lag, tasa de DLQ |
-| **6** | Revisión de confiabilidad: pruebas de chaos en escenarios de circuit breaker | Implementar mensajería asíncrona para el flujo de notificación de siniestros | Primer runbook on-call: circuit breaker abierto, pico de DLQ, degradación de latencia |
-| **7** | Implementar capa de caché: catálogo de productos, tokens OAuth | Publicar plantillas reutilizables de Experience API en Anypoint Exchange | Trazas distribuidas end-to-end: propagación de traza en límites síncronos y asíncronos |
-| **8** | Pruebas de carga: validar auto-escalado y aislamiento por bulkhead bajo tráfico pico | Migrar segundo lote de integraciones por país al patrón compartido de System API | Revisión de SLOs: ajustar umbrales con base en 4 semanas de datos de baseline |
-| **9** | Implementar procesamiento y alertas de Dead Letter Queue | Implementar idempotencia en el consumidor de mensajes (deduplicación asíncrona) | Informe de planeación de capacidad: límites de API de Salesforce por país, utilización de workers de MuleSoft |
-| **10** | Chaos engineering: simular degradación de Salesforce; validar circuit breaker y fallback | Revisión de gobierno de APIs: deprecar integraciones directas legadas | Finalizar runbook on-call para todos los escenarios P1/P2 |
-| **11** | Validación de HA multi-país: simular fallo de zona de disponibilidad | Completar librería de assets en Anypoint Exchange: todas las APIs reutilizables documentadas | Informe ejecutivo de observabilidad: cumplimiento de SLOs, tendencias de incidentes, proyección de capacidad |
-| **12** | Cierre de confiabilidad: todos los SLOs cumplidos, todos los caminos críticos probados | Modernización de integración completa: sin integraciones directas a Salesforce que eviten MuleSoft | Observabilidad completamente operativa: trazas, logs, métricas, alertas, runbooks |
+#### Track 1 — Confiabilidad
+
+| Semana | Actividad |
+|:---:|---|
+| 1 | Auditar configuraciones actuales de circuit breaker y reintento en todas las APIs de MuleSoft |
+| 2 | Definir SLOs por API (disponibilidad, latencia p95, tasa de error) |
+| 3 | Implementar aislamiento de thread pool por bulkhead por país en MuleSoft |
+| 4 | Desplegar validación de clave de idempotencia para todas las Process APIs mutantes |
+| 5 | Implementar reintento con backoff exponencial + jitter en todas las llamadas a System APIs |
+| 6 | Revisión de confiabilidad: pruebas de chaos en escenarios de circuit breaker |
+| 7 | Implementar capa de caché: catálogo de productos, tokens OAuth |
+| 8 | Pruebas de carga: validar auto-escalado y aislamiento por bulkhead bajo tráfico pico |
+| 9 | Implementar procesamiento y alertas de Dead Letter Queue |
+| 10 | Chaos engineering: simular degradación de Salesforce; validar circuit breaker y fallback |
+| 11 | Validación de HA multi-país: simular fallo de zona de disponibilidad |
+| 12 | Cierre: todos los SLOs cumplidos, todos los caminos críticos probados |
+
+#### Track 2 — Modernización de Integración
+
+| Semana | Actividad |
+|:---:|---|
+| 1 | Inventariar todas las System APIs existentes e identificar duplicación entre países |
+| 2 | Establecer estándares de diseño de API y política de versionamiento (semver) |
+| 3 | Refactorizar conectores duplicados por país en System APIs compartidas |
+| 4 | Migrar las 3 integraciones de mayor tráfico al nuevo patrón de System API |
+| 5 | Implementar mensajería asíncrona para el flujo de emisión de pólizas |
+| 6 | Implementar mensajería asíncrona para el flujo de notificación de siniestros |
+| 7 | Publicar plantillas reutilizables de Experience API en Anypoint Exchange |
+| 8 | Migrar segundo lote de integraciones por país al patrón compartido de System API |
+| 9 | Implementar idempotencia en el consumidor de mensajes (deduplicación asíncrona) |
+| 10 | Revisión de gobierno de APIs: deprecar integraciones directas legadas |
+| 11 | Completar librería de assets en Anypoint Exchange: todas las APIs reutilizables documentadas |
+| 12 | Cierre: sin integraciones directas a Salesforce que eviten MuleSoft |
+
+#### Track 3 — Observabilidad y Operaciones
+
+| Semana | Actividad |
+|:---:|---|
+| 1 | Desplegar OpenTelemetry collector; instrumentar las 5 Process APIs críticas principales |
+| 2 | Implementar logging JSON estructurado con propagación de correlation ID |
+| 3 | Construir primer dashboard de métricas: tasa de error, latencia, estado del circuit breaker |
+| 4 | Definir reglas de alerta basadas en tasa de consumo de error budget del SLO |
+| 5 | Instrumentar flujos asíncronos: profundidad de cola, consumer lag, tasa de DLQ |
+| 6 | Primer runbook on-call: circuit breaker abierto, pico de DLQ, degradación de latencia |
+| 7 | Trazas distribuidas end-to-end: propagación de traza en límites síncronos y asíncronos |
+| 8 | Revisión de SLOs: ajustar umbrales con base en 4 semanas de datos de baseline |
+| 9 | Informe de planeación de capacidad: límites de API de Salesforce por país, utilización de workers |
+| 10 | Finalizar runbook on-call para todos los escenarios P1/P2 |
+| 11 | Informe ejecutivo de observabilidad: cumplimiento de SLOs, tendencias de incidentes |
+| 12 | Cierre: trazas, logs, métricas, alertas y runbooks completamente operativos |
 
 ### Resumen de Flujos de Trabajo
 
