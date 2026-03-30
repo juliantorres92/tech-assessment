@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram name="Arquitectura Canal Digital Sura" id="0">
-        <mxGraphModel dx="679" dy="468" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="778" dy="765" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -139,8 +139,15 @@
                 <mxCell id="e_gw_exp" value="REST" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;fontSize=9;fontStyle=2;" parent="1" source="APIGW" target="grp_exp" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" parent="1" source="EXP_WEB" target="PROC_QUOTE" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.25;entryY=0;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="135" y="314" as="sourcePoint"/>
+                        <mxPoint x="136.25" y="408" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="136" y="314"/>
+                            <mxPoint x="136" y="315"/>
+                        </Array>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="EXP_MOB" target="PROC_QUOTE" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
@@ -151,16 +158,32 @@
                 <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="EXP_PRT" target="PROC_CLAIM" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.2;entryY=0;" parent="1" source="PROC_QUOTE" target="SYS_SF" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;entryX=0.418;entryY=0.025;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="SYS_SF" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="130" y="450" as="sourcePoint"/>
+                        <Array as="points">
+                            <mxPoint x="130" y="490"/>
+                            <mxPoint x="129" y="490"/>
+                        </Array>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="PROC_POLICY" target="SYS_SF" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="438" y="480"/>
+                            <mxPoint x="142" y="480"/>
+                        </Array>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="PROC_POLICY" target="SYS_PAY" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="438" y="480"/>
+                            <mxPoint x="338" y="480"/>
+                        </Array>
+                    </mxGeometry>
                 </mxCell>
-                <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;exitX=0.3;exitY=1;entryX=0.2;entryY=0;" parent="1" source="PROC_CLAIM" target="SYS_SF" edge="1">
+                <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;exitDx=0;exitDy=0;" parent="1" source="PROC_CLAIM" target="SYS_SF" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="PROC_CLAIM" target="SYS_DOC" edge="1">
@@ -175,8 +198,10 @@
                 <mxCell id="e18" value="REST" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.466;entryY=0.071;fontSize=9;fontStyle=2;exitDx=0;exitDy=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="SYS_SF" target="SF" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="SYS_PAY" target="PAY" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;" parent="1" source="SYS_PAY" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="338" y="740" as="targetPoint"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="SYS_DOC" target="DOC" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
@@ -184,10 +209,10 @@
                 <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="SYS_NOTIF" target="NOTIF" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e14" value="async" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.4;entryX=0;entryY=0.4;fontSize=9;fontStyle=2;" parent="1" source="PROC_POLICY" target="MQ" edge="1">
+                <mxCell id="e14" value="" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.4;entryX=0;entryY=0.25;fontSize=9;fontStyle=2;entryDx=0;entryDy=0;" parent="1" source="PROC_POLICY" target="MQ" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="e15" value="" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.6;entryX=0;entryY=0.6;" parent="1" source="PROC_CLAIM" target="MQ" edge="1">
+                <mxCell id="e15" value="" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.6;entryX=-0.001;entryY=0.421;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="PROC_CLAIM" target="MQ" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="e16" value="fallo" style="edgeStyle=orthogonalEdgeStyle;dashed=1;strokeColor=#9673a6;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=9;" parent="1" source="MQ" target="DLQ" edge="1">
