@@ -120,13 +120,10 @@ def emitir_poliza(solicitud, clave_idempotencia, traza):
 # Demo
 # ---------------------------------------------------------------------------
 def run_demo():
-    traza_raiz = TraceContext()
-
     print(f"\n{Color.BOLD}{'═' * 70}{Color.RESET}")
     print(f"{Color.BOLD}  DEMO — Servicio de Emisión de Pólizas | Confiabilidad Bajo Fallo{Color.RESET}")
     print(f"{Color.BOLD}{'═' * 70}{Color.RESET}")
-    print(f"\n{Color.GRIS}  Trace ID : {traza_raiz.trace_id}")
-    print(f"  Upstream : {int(FAILURE_RATE*100)}% fallos | {int(TIMEOUT_RATE*100)}% timeouts | {int((1-FAILURE_RATE-TIMEOUT_RATE)*100)}% éxito{Color.RESET}\n")
+    print(f"\n{Color.GRIS}  Upstream : {int(FAILURE_RATE*100)}% fallos | {int(TIMEOUT_RATE*100)}% timeouts | {int((1-FAILURE_RATE-TIMEOUT_RATE)*100)}% éxito{Color.RESET}\n")
 
     # ── Escenario 1: Retry ──────────────────────────────────────────────────
     titulo("ESCENARIO 1 — Retry con Backoff y Jitter")
@@ -143,10 +140,11 @@ def run_demo():
             "prima": 150000 + (i * 10000),
         }
         clave_idem = f"demo-poliza-{i:03d}"
-        print(f"{Color.BOLD}  [{i}/8] cuenta {solicitud['id_cuenta']}{Color.RESET}")
+        traza = TraceContext()
+        print(f"{Color.BOLD}  [{i}/8] cuenta {solicitud['id_cuenta']}  {Color.GRIS}trace: {traza.trace_id[:16]}...{Color.RESET}")
 
         try:
-            respuesta = emitir_poliza(solicitud, clave_idem, traza_raiz)
+            respuesta = emitir_poliza(solicitud, clave_idem, traza)
             ok(f"EMITIDA  — id_poliza: {respuesta.get('id_poliza')} | intento registrado en log")
             resultados["exitosas"] += 1
         except CircuitBreakerOpenError:
@@ -174,10 +172,11 @@ def run_demo():
     for i in range(9, 15):
         solicitud = {"id_cuenta": f"001-CUENTA-{i:03d}", "codigo_producto": "VIDA_COL", "prima": 200000}
         clave_idem = f"demo-poliza-{i:03d}"
-        print(f"{Color.BOLD}  [{i-8}/6] cuenta {solicitud['id_cuenta']}{Color.RESET}")
+        traza = TraceContext()
+        print(f"{Color.BOLD}  [{i-8}/6] cuenta {solicitud['id_cuenta']}  {Color.GRIS}trace: {traza.trace_id[:16]}...{Color.RESET}")
 
         try:
-            respuesta = emitir_poliza(solicitud, clave_idem, traza_raiz)
+            respuesta = emitir_poliza(solicitud, clave_idem, traza)
             ok(f"EMITIDA  — id_poliza: {respuesta.get('id_poliza')}")
             resultados["exitosas"] += 1
         except CircuitBreakerOpenError:
@@ -199,12 +198,14 @@ def run_demo():
     info("Repetimos una petición ya procesada con la misma clave.")
     info("El framework retorna el resultado cacheado — Salesforce no recibe nada.\n")
 
+    traza_idem = TraceContext()
     print(f"{Color.BOLD}  Re-enviando demo-poliza-001 (ya emitida en Escenario 1){Color.RESET}")
+    print(f"{Color.GRIS}  trace: {traza_idem.trace_id[:16]}... (nuevo trace, misma clave de idempotencia){Color.RESET}")
     try:
         respuesta = emitir_poliza(
             {"id_cuenta": "001-CUENTA-001", "codigo_producto": "VIDA_COL", "prima": 160000},
             clave_idempotencia="demo-poliza-001",
-            traza=traza_raiz,
+            traza=traza_idem,
         )
         ok(f"RESPUESTA DESDE CACHE — {respuesta}")
         info("Salesforce no recibió ninguna llamada. Sin póliza duplicada.")
@@ -221,7 +222,6 @@ def run_demo():
     print(f"  {Color.VERDE}✔{Color.RESET}  Idempotencia — sin duplicados al reintentar")
     print(f"  {Color.VERDE}✔{Color.RESET}  Logging JSON estructurado con trace ID")
     print(f"  {Color.VERDE}✔{Color.RESET}  Propagacion de traza W3C en cada llamada")
-    print(f"\n{Color.GRIS}  Trace ID: {traza_raiz.trace_id}{Color.RESET}")
     print(f"{Color.BOLD}{'═' * 70}{Color.RESET}\n")
 
 

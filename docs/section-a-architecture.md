@@ -120,60 +120,71 @@ La emisión de pólizas, notificación de siniestros y sincronización de datos 
 
 ## 2. Diagrama de Arquitectura
 
-Ver [diagrams/architecture.mmd](../diagrams/architecture.mmd) para la fuente en Mermaid.
+![Diagrama de Arquitectura](../diagrams/architecture.png)
 
+<!-- fuente editable: diagrams/architecture.mmd | diagrams/architecture.drawio -->
+
+<!--
 ```mermaid
 graph TB
-    subgraph Channels["Canales Digitales"]
+    subgraph Channels["Canales Digitales   ·   CO | CL | VE | PE"]
         WEB[Portal Web]
-        MOB[App Móvil]
+        MOB[App Movil]
         BRK[Portal de Corredores]
         PRT[APIs de Socios]
     end
 
-    subgraph Experience["Experience APIs (MuleSoft)"]
-        EXP_WEB[Experience API Web]
-        EXP_MOB[Experience API Móvil]
-        EXP_BRK[Experience API Corredor]
-        EXP_PRT[Experience API Socio]
+    APIGW["API Gateway   ·   Autenticacion OAuth 2.0   ·   Control de trafico   ·   Enrutamiento por pais"]
+
+    subgraph Experience["Experience APIs — MuleSoft   ·   Escalado automatico   ·   Alta Disponibilidad"]
+        EXP_WEB[Exp API Web]
+        EXP_MOB[Exp API Movil]
+        EXP_BRK[Exp API Corredor]
+        EXP_PRT[Exp API Socio]
     end
 
-    subgraph Process["Process APIs (MuleSoft) — Capa de Resiliencia"]
-        PROC_QUOTE[API Orquestación Cotización]
-        PROC_POLICY[API Emisión de Póliza]
-        PROC_CLAIM[API Ingreso de Siniestro]
+    subgraph Process["Process APIs — MuleSoft   ·   Circuit Breaker · Retry+Jitter · Bulkhead por pais · Idempotencia"]
+        PROC_QUOTE["API Cotizacion\nsincrona"]
+        PROC_POLICY["API Emision de Poliza\nsincrona + asincrona"]
+        PROC_CLAIM["API Ingreso de Siniestro\nasincrona"]
     end
 
-    subgraph System["System APIs (MuleSoft)"]
-        SYS_SF[Salesforce System API]
-        SYS_PAY[Payment Gateway System API]
-        SYS_DOC[Document System API]
-        SYS_NOTIF[Notification System API]
+    subgraph System["System APIs — MuleSoft"]
+        SYS_SF[API Salesforce FSC]
+        SYS_PAY[Conector Pagos]
+        SYS_DOC[API Documentos]
+        SYS_NOTIF[API Notificaciones]
     end
 
-    subgraph Async["Capa de Mensajería Asíncrona"]
-        MQ[Broker de Mensajes / Anypoint MQ]
-        DLQ[Cola de Mensajes Fallidos]
-    end
+    REDIS["Cache Distribuido   ·   Almacen de claves de idempotencia · Cache de sesion"]
 
     subgraph Core["Sistemas Core"]
-        SF[Salesforce — Core de Seguros]
+        SF["Salesforce FSC\n+ Omnistudio + Industries"]
         PAY[Pasarela de Pagos]
         DOC[Servicio de Documentos]
-        NOTIF[Servicio de Notificaciones]
+        NOTIF["Notificaciones\nEmail / SMS / Push"]
     end
 
-    subgraph Obs["Observabilidad"]
-        OTEL[OpenTelemetry Collector]
-        LOG[Logging Centralizado]
-        DASH[Dashboard de Métricas]
-        ALERT[Alertas SLO]
+    subgraph Async["Mensajeria Asincrona"]
+        MQ["Anypoint MQ\nBroker de Mensajes"]
+        DLQ["Cola de Mensajes Fallidos\nReintentos agotados\n+ alerta al equipo"]
     end
 
-    WEB --> EXP_WEB
-    MOB --> EXP_MOB
-    BRK --> EXP_BRK
-    PRT --> EXP_PRT
+    subgraph Obs["Observabilidad — OpenTelemetry"]
+        OTEL["Colector OpenTelemetry\ntrazas · metricas · logs"]
+        LOG["Logging Centralizado\nJSON estructurado"]
+        METRICS["Metricas\nen tiempo real"]
+        TRACES["Trazas Distribuidas\nseguimiento end-to-end"]
+        ALERT["Alertas\nNotificacion de incidentes"]
+        DASH["Dashboard Ejecutivo\ndisponibilidad por pais"]
+    end
+
+    WEB --> APIGW
+    MOB --> APIGW
+    BRK -->|OAuth 2.0| APIGW
+    PRT --> APIGW
+
+    APIGW -->|REST| Experience
 
     EXP_WEB --> PROC_QUOTE
     EXP_MOB --> PROC_QUOTE
@@ -186,23 +197,28 @@ graph TB
     PROC_CLAIM --> SYS_SF
     PROC_CLAIM --> SYS_DOC
 
-    PROC_POLICY --> MQ
-    PROC_CLAIM --> MQ
-    MQ --> DLQ
+    PROC_POLICY -.->|async| MQ
+    PROC_CLAIM -.->|async| MQ
+    MQ -.->|fallo| DLQ
+    MQ -.->|evento| SYS_NOTIF
 
-    SYS_SF --> SF
+    System --> REDIS
+    REDIS --> Core
+
+    SYS_SF -->|REST| SF
     SYS_PAY --> PAY
     SYS_DOC --> DOC
     SYS_NOTIF --> NOTIF
-    MQ --> SYS_NOTIF
 
-    PROC_QUOTE --> OTEL
-    PROC_POLICY --> OTEL
-    PROC_CLAIM --> OTEL
+    APIGW -.->|"OTel SDK en todas las capas MuleSoft"| OTEL
     OTEL --> LOG
-    OTEL --> DASH
-    OTEL --> ALERT
+    OTEL --> METRICS
+    LOG --> TRACES
+    METRICS --> ALERT
+    TRACES --> DASH
+    ALERT --> DASH
 ```
+-->
 
 ---
 
