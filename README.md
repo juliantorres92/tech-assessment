@@ -1,146 +1,72 @@
-# Líder Técnico – Prueba Técnica Práctica
-**Candidato:** Julian Torres
-**Cargo:** Líder Técnico – Canal Digital Directo
-**Empresa:** Sura
+# Technical Lead – Practical Technical Assessment
+**Candidate:** Julian Torres
+**Role:** Technical Lead – Digital Direct Channel
+**Company:** Sura
 
 ---
 
-## Entregables
+## Deliverables
 
-Este repositorio contiene todos los entregables de la prueba técnica práctica. Cada sección está documentada en `docs/` y todo el código en `src/`.
+This repository contains all deliverables for the practical technical assessment. Each section is documented in `docs/` and all code is in `src/`.
 
-| Sección | Entregable | Archivo |
+| Section | Deliverable | File |
 |---|---|---|
-| **A – Arquitectura y Hoja de Ruta** | Arquitectura end-to-end + hoja de ruta 12 semanas + diagrama | [docs/section-a-architecture.md](docs/section-a-architecture.md) |
-| **B – Framework de Integración** | Framework Python reutilizable + decisiones de diseño | [docs/section-b-framework.md](docs/section-b-framework.md) · [src/framework.py](src/framework.py) |
-| **C – Servicio Demo** | Demo de confiabilidad con upstream inestable simulado | [docs/section-c-demo.md](docs/section-c-demo.md) · [src/demo.py](src/demo.py) |
-| **D – Registro de Decisión Técnica** | ADR: centralizado vs. descentralizado · event-driven vs. síncrono | [docs/section-d-adr.md](docs/section-d-adr.md) |
+| **A – Architecture & Roadmap** | End-to-end architecture + 12-week roadmap + diagram | [docs/section-a-architecture.md](docs/section-a-architecture.md) |
+| **B – Integration Framework** | Reusable Python framework + design decisions | [docs/section-b-framework.md](docs/section-b-framework.md) · [src/framework.py](src/framework.py) |
+| **C – Demo Service** | Reliability demo with simulated unstable upstream | [docs/section-c-demo.md](docs/section-c-demo.md) · [src/demo.py](src/demo.py) |
+| **D – Technical Decision Record** | ADR: centralized vs. decentralized · event-driven vs. synchronous | [docs/section-d-adr.md](docs/section-d-adr.md) |
 
 ---
 
-## Diagrama de Arquitectura
+## Architecture Diagram
 
-El fuente del diagrama está en [diagrams/architecture.mmd](diagrams/architecture.mmd) (formato Mermaid).
+The diagram source is available in [diagrams/architecture.mmd](diagrams/architecture.mmd) (Mermaid format) and [diagrams/architecture.drawio](diagrams/architecture.drawio) (draw.io editable format).
 
-```mermaid
-graph TB
-    subgraph Channels["Canales Digitales"]
-        WEB[Portal Web]
-        MOB[App Móvil]
-        BRK[Portal de Corredores]
-        PRT[APIs de Socios]
-    end
-
-    subgraph Experience["Experience APIs (MuleSoft)"]
-        EXP_WEB[Experience API Web]
-        EXP_MOB[Experience API Móvil]
-        EXP_BRK[Experience API Corredor]
-        EXP_PRT[Experience API Socio]
-    end
-
-    subgraph Process["Process APIs (MuleSoft) — Capa de Resiliencia"]
-        PROC_QUOTE[API Orquestación Cotización]
-        PROC_POLICY[API Emisión de Póliza]
-        PROC_CLAIM[API Ingreso de Siniestro]
-    end
-
-    subgraph System["System APIs (MuleSoft)"]
-        SYS_SF[Salesforce System API]
-        SYS_PAY[Payment Gateway System API]
-        SYS_DOC[Document System API]
-        SYS_NOTIF[Notification System API]
-    end
-
-    subgraph Async["Capa de Mensajería Asíncrona"]
-        MQ[Broker de Mensajes / Anypoint MQ]
-        DLQ[Cola de Mensajes Fallidos]
-    end
-
-    subgraph Core["Sistemas Core"]
-        SF[Salesforce — Core de Seguros]
-        PAY[Pasarela de Pagos]
-        DOC[Servicio de Documentos]
-        NOTIF[Servicio de Notificaciones]
-    end
-
-    subgraph Obs["Observabilidad"]
-        OTEL[OpenTelemetry Collector]
-        LOG[Logging Centralizado]
-        DASH[Dashboard de Métricas]
-        ALERT[Alertas SLO]
-    end
-
-    WEB --> EXP_WEB
-    MOB --> EXP_MOB
-    BRK --> EXP_BRK
-    PRT --> EXP_PRT
-
-    EXP_WEB --> PROC_QUOTE
-    EXP_MOB --> PROC_QUOTE
-    EXP_BRK --> PROC_POLICY
-    EXP_PRT --> PROC_CLAIM
-
-    PROC_QUOTE --> SYS_SF
-    PROC_POLICY --> SYS_SF
-    PROC_POLICY --> SYS_PAY
-    PROC_CLAIM --> SYS_SF
-    PROC_CLAIM --> SYS_DOC
-
-    PROC_POLICY --> MQ
-    PROC_CLAIM --> MQ
-    MQ --> DLQ
-
-    SYS_SF --> SF
-    SYS_PAY --> PAY
-    SYS_DOC --> DOC
-    SYS_NOTIF --> NOTIF
-    MQ --> SYS_NOTIF
-
-    PROC_QUOTE --> OTEL
-    PROC_POLICY --> OTEL
-    PROC_CLAIM --> OTEL
-    OTEL --> LOG
-    OTEL --> DASH
-    OTEL --> ALERT
-```
+![Architecture Diagram](diagrams/architecture.png)
 
 ---
 
-## Ejecutar el Demo (Sección C)
+## Running the Demo (Section C)
 
-Requisitos: Python 3.8+. Sin paquetes adicionales.
+Requirements: Python 3.8+. No additional packages needed.
 
 ```bash
 python src/demo.py
 ```
 
-El demo inicia un upstream inestable simulado (Salesforce System API) y ejecuta una secuencia de solicitudes de emisión de pólizas, demostrando:
+The demo starts a simulated unstable upstream (Salesforce System API) and runs a sequence of policy issuance requests, demonstrating:
 
-- Reintento con backoff exponencial y jitter en fallos transitorios (HTTP 503)
-- Timeout por petición (5s) en respuestas lentas del upstream
-- Circuit breaker que se abre tras el umbral de fallos
-- Idempotencia: peticiones duplicadas servidas desde caché
-- Logging JSON estructurado con propagación de trace ID
+- Retry with exponential backoff and jitter on transient failures (HTTP 503)
+- Per-request timeout (5s) on slow upstream responses
+- Circuit breaker that opens after the failure threshold
+- Idempotency: duplicate requests served from cache
+- Structured JSON logging with trace ID propagation
+
+To view clean visual output without JSON logs:
+
+```bash
+python src/demo.py 2>/dev/null
+```
 
 ---
 
-## Estructura del Repositorio
+## Repository Structure
 
 ```
 tech-assessment/
 ├── docs/
-│   ├── section-a-architecture.md   # Arquitectura y hoja de ruta 12 semanas
-│   ├── section-b-framework.md      # Decisiones de diseño del framework
-│   ├── section-c-demo.md           # Instrucciones de ejecución y escenarios de fallo
-│   └── section-d-adr.md            # Registros de Decisión Técnica (2 ADRs)
+│   ├── section-a-architecture.md   # Architecture and 12-week roadmap
+│   ├── section-b-framework.md      # Framework design decisions
+│   ├── section-c-demo.md           # Run instructions and failure scenarios
+│   └── section-d-adr.md            # Technical Decision Records (2 ADRs)
 ├── src/
-│   ├── framework.py                # Framework de integración reutilizable
-│   └── demo.py                     # Servicio demo con upstream inestable
+│   ├── framework.py                # Reusable integration framework
+│   └── demo.py                     # Demo service with unstable upstream
 ├── diagrams/
-│   └── architecture.mmd            # Diagrama de arquitectura (fuente Mermaid)
-├── prep/                           # Material de preparación interno (no se entrega)
-│   ├── concepts-glossary.md
-│   └── interview-prep.md
-├── Technical_Lead_Assessment.pdf   # Documento original de la prueba
-└── README.md                       # Este archivo
+│   ├── architecture.mmd            # Architecture diagram source (Mermaid)
+│   ├── architecture.drawio         # Architecture diagram (draw.io editable)
+│   └── architecture.png            # Architecture diagram (rendered image)
+├── Technical_Lead_Assessment.pdf   # Original assessment document
+├── Technical_Lead_Assessment_Submission.pdf  # Submission document
+└── README.md                       # This file
 ```
